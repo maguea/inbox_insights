@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.bak
+*~
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+
+# Sensitive data/config
+config.ini
+.env
