@@ -68,7 +68,7 @@ class Gather:
                 return ''
             return payload.decode(msg.get_content_charset() or 'utf-8', errors='ignore').strip()
 
-    def fetch_unread_and_mark_seen(self, limit=None):
+    def fetch_unread_and_mark_seen(self):
         '''
         Fetch unread emails, mark them as read, and return a dict:
             {'sender@example.com': {'content': 'message'}}
@@ -82,9 +82,6 @@ class Gather:
             ids = data[0].split()
             if not ids:
                 return {}
-
-            if limit is not None:
-                ids = ids[:limit]
 
             result = {}
             for eid in ids:
@@ -114,6 +111,6 @@ if __name__ == '__main__':
     USER = EMAIL_CONST.GMAIL['user']
     PASS = EMAIL_CONST.GMAIL['pass']
     SERVER = EMAIL_CONST.GMAIL['server']
-    g = Gather(USER, PASS, SERVER)
-    unread = g.fetch_unread_and_mark_seen(limit=5)
-    print(unread)
+    test = Gather(USER, PASS, SERVER)
+    test_emails = test.fetch_unread_and_mark_seen()
+    print(test_emails)
