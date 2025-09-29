@@ -18,3 +18,8 @@ class EMAIL_CONST:
         'pass' : os.getenv('OUTLOOK_PASS'),
         'server' :  'imap-mail.outlook.com'
     }
+
+    LOGIN_SUCCESS = 0
+    INCORRECT_ACCOUNT_INFO = 1
+    MISSING_ACCOUNT = 2
+    IMAP_CONN_FAIL = 3

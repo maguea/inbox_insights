@@ -3,6 +3,7 @@
 from dotenv import set_key, load_dotenv
 from pathlib import Path
 from lib.email_scraper.email_scraper import Gather
+from lib.email_scraper.email_consts import EMAIL_CONST
 import os
 
 def _create_account(user, password, server):
@@ -12,19 +13,27 @@ def _create_account(user, password, server):
     set_key(dotenv_path=env_file_path, key_to_set='CLIENT_SERVER', value_to_set='example.imap.com')
 
 def _login(user, password):
+    'Checks basic connection. Returns: [0: Success], [1: Incorrect Password or Email], [2: Account not set up/not saved], [3: IMAP server connection failed]'
     load_dotenv()
-    check_user = os.getenv('CLIENT_USER')
+
+    try:
+        check_user = os.getenv('CLIENT_USER')
+    except:
+        return EMAIL_CONST.MISSING_ACCOUNT
+    
     check_pass = os.getenv('CLIENT_PASS')
     check_server = os.getenv('CLIENT_SERVER')
 
-    if check_pass != password:
-        return 'LOGIN ERROR: Incorrect Password'
+    if check_pass != password or check_user != user:
+        return EMAIL_CONST.INCORRECT_ACCOUNT_INFO
     
     user_connection_check = Gather(check_user, check_pass, check_server)
 
     try:
         user_connection_check._connect()
-    except Exception as e:
-        return f'CONNECTION ERROR: {e}'
+        # Disconnects for security
+        user_connection_check._disconnect()
+    except:
+        return EMAIL_CONST.IMAP_CONN_FAIL
     
-    return 'SUCCESS'
+    return EMAIL_CONST.LOGIN_SUCCESS
