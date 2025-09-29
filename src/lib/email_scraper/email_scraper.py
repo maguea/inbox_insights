@@ -98,7 +98,8 @@ class Gather:
                 result[sender] = {'content': content}
 
                 # Mark as read
-                self.conn.store(eid, '+FLAGS', r'(\Seen)')
+                # Removed for testing
+                # self.conn.store(eid, '+FLAGS', r'(\Seen)')
 
             return result
 
