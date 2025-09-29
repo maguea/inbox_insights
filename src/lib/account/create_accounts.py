@@ -14,7 +14,14 @@ def _create_account(user, password, server):
     set_key(dotenv_path=env_file_path, key_to_set='CLIENT_SERVER', value_to_set='example.imap.com')
 
 def _login(user, password):
-    'Checks basic connection. Returns: [0: Success], [1: Incorrect Password or Email], [2: Account not set up/not saved], [3: IMAP server connection failed]'
+    '''
+    Checks basic connection.
+        Returns: 
+        - 0: Success 
+        - 1: Incorrect Password or Email 
+        - 2: Account not set up/not saved 
+        - 3: IMAP server connection failed
+    '''
     load_dotenv()
 
     try:
