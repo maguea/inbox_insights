@@ -31,6 +31,9 @@ class Gather:
             self.conn = None
 
     def _decode_header_value(self, value):
+        '''
+        Gets sender (alias connected to email)
+        '''
         if not value:
             return ''
         parts = decode_header(value)
@@ -43,11 +46,17 @@ class Gather:
         return ''.join(decoded)
 
     def _get_sender(self, msg):
+        '''
+        Returns alias, email, or 'unknown'
+        '''
         name, addr = parseaddr(msg.get('From', ''))
         name = self._decode_header_value(name)
         return addr or name or 'unknown'
 
     def _get_plain_text(self, msg):
+        '''
+        Returns full content
+        '''
         if msg.is_multipart():
             for part in msg.walk():
                 ctype = part.get_content_type()
