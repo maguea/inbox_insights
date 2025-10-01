@@ -4,15 +4,15 @@ class Category:
     def __init__(self, name):
         self.name = name  #name of the category        
         self.target_senders = set()  #set of emails that should be auto added to this category
-        self.alternative_names = set()   #set of alternative names for this category
+        self.category_tags = set()   #set of alternative names for this category
         self.emails = []  #list of emails that have been categorized here     
 
-    def add_alternative_name(self, alt_name):
-        self.alternative_names.add(alt_name)
+    def add_category_tag(self, cat_tag):
+        self.category_tags.add(cat_tag)
 
-    def remove_alternative_name(self, alt_name):
-        if alt_name in self.alternative_names:
-            self.alternative_names.remove(alt_name)
+    def remove_category_tag(self, cat_tag):
+        if cat_tag in self.category_tags:
+            self.category_tags.remove(cat_tag)
 
     def add_target_sender(self, email):
         self.target_senders.add(email)
