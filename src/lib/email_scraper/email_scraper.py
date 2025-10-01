@@ -3,7 +3,7 @@
 import imaplib, email
 from email.header import decode_header
 from email.utils import parseaddr
-from email_consts import EMAIL_CONST
+from lib.email_scraper.email_consts import EMAIL_CONST
 
 
 class Gather:
