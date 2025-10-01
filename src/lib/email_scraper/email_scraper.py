@@ -68,7 +68,7 @@ class Gather:
                 return ''
             return payload.decode(msg.get_content_charset() or 'utf-8', errors='ignore').strip()
 
-    def fetch_unread_and_mark_seen(self):
+    def _fetch_unread_and_mark_seen(self):
         '''
         Fetch unread emails, mark them as read, and return a dict:
             {'sender@example.com': {'content': 'message'}}
@@ -113,5 +113,5 @@ if __name__ == '__main__':
     PASS = EMAIL_CONST.GMAIL['pass']
     SERVER = EMAIL_CONST.GMAIL['server']
     test = Gather(USER, PASS, SERVER)
-    test_emails = test.fetch_unread_and_mark_seen()
+    test_emails = test._fetch_unread_and_mark_seen()
     print(test_emails)
