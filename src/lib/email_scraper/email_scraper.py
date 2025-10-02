@@ -31,6 +31,9 @@ class Gather:
             self.conn = None
 
     def _decode_header_value(self, value):
+        '''
+        Gets sender (alias connected to email)
+        '''
         if not value:
             return ''
         parts = decode_header(value)
@@ -43,11 +46,17 @@ class Gather:
         return ''.join(decoded)
 
     def _get_sender(self, msg):
+        '''
+        Returns alias, email, or 'unknown'
+        '''
         name, addr = parseaddr(msg.get('From', ''))
         name = self._decode_header_value(name)
         return addr or name or 'unknown'
 
     def _get_plain_text(self, msg):
+        '''
+        Returns full content
+        '''
         if msg.is_multipart():
             for part in msg.walk():
                 ctype = part.get_content_type()
@@ -68,7 +77,7 @@ class Gather:
                 return ''
             return payload.decode(msg.get_content_charset() or 'utf-8', errors='ignore').strip()
 
-    def fetch_unread_and_mark_seen(self):
+    def _fetch_unread_and_mark_seen(self):
         '''
         Fetch unread emails, mark them as read, and return a dict:
             {'sender@example.com': {'content': 'message'}}
@@ -113,5 +122,5 @@ if __name__ == '__main__':
     PASS = EMAIL_CONST.GMAIL['pass']
     SERVER = EMAIL_CONST.GMAIL['server']
     test = Gather(USER, PASS, SERVER)
-    test_emails = test.fetch_unread_and_mark_seen()
+    test_emails = test._fetch_unread_and_mark_seen()
     print(test_emails)
