@@ -1,23 +1,21 @@
 # tolu kolade
-from flask import Flask, render_template, request, redirect
+from app import Flask, render_template, request, redirect
 # from pathlib import Path
 import sys
 import os
-from flask import Flask, request, jsonify, render_template
-from lib.account.categories import save_categories, load_categories
+from app import Flask, request, jsonify, render_template
+from src.lib.account.categories import save_categories, load_categories
 
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from lib.account.create_accounts import _create_account, _login
+from src.lib.account.create_accounts import _create_account, _login
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    # TODO: temp. MUST REMOVE
-    _create_account('insighti338@gmail.com', 'Y<0;y4T3R>@&', 'imap.google.com')
-    result = _login('insighti338@gmail.com', 'Y<0;y4T3R>@&')
+    result = _login()
     # TODO: check if user already has an account
     if False:
         return redirect(url_for('login'))
@@ -35,7 +33,6 @@ def client_settings():
         _create_account(username, password, server)
         result = _login(username, password) # ideally use this to show status
 
-        
         # Redirect or render with success message
         return render_template('settings.html', success=True, code=result)
     
