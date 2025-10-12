@@ -45,3 +45,20 @@ def _login(user, password):
         return EMAIL_CONST.IMAP_CONN_FAIL
     
     return EMAIL_CONST.LOGIN_SUCCESS
+
+def _check_env():
+    '''
+    Checks basic connection.
+        Returns: 
+        - 0: Success 
+        - 1: Incorrect Password or Email 
+        - 2: Account not set up/not saved 
+        - 3: IMAP server connection failed
+    '''
+    load_dotenv()
+
+    try:
+        os.getenv('CLIENT_USER')
+    except:
+        return False
+    return True

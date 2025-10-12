@@ -1,11 +1,70 @@
-{#Tolu Kolade#}
-
 {% extends "base.html" %}
 
-{% block title %}History{% endblock %}
+{% block title %}Email History{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1>All Emails</h1>
+<div class="page-header mb-4">
+    <h1>All Emails History</h1>
 </div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <aside class="col-md-4 col-lg-3 border-end">
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                        <input id="emailSearch" type="text" class="form-control" placeholder="Search emails..."
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <div id="emailList" class="list-group list-group-flush email-list"
+                    style="max-height:70vh;overflow-y:auto;">
+                    {% for email in emails %}
+                    <button type="button" class="list-group-item list-group-item-action email-item text-start"
+                        data-email-id="{{ email.id }}" data-detail-url="{{ url_for('get_email', eid=email.id) }}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="fw-semibold text-truncate">{{ email.sender.split('<')[0] }}</span>
+                                    <small class="text-muted">{{ email.timestamp }}</small>
+                        </div>
+                        <div class="small text-muted text-truncate">{{ email.subject }}</div>
+                        <div class="small text-muted text-truncate">{{ email.preview }}</div>
+                    </button>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <!-- Primary -->
+            <main class="col-md-8 col-lg-9 position-relative" id="emailContent">
+                <div id="panePlaceholder" class="placeholder-pane text-center py-5">
+                    <i class="fas fa-envelope-open display-4 mb-3 text-muted"></i>
+                    <h4 class="text-muted">Select an email to read</h4>
+                    <p class="text-muted">Click an item on the left panel.</p>
+                </div>
+
+                <article id="paneDetail" class="p-4 d-none" aria-live="polite">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h3 id="emailSubject" class="h4 mb-0"></h3>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary btn-sm" title="Delete"><i
+                                    class="bi bi-trash-fill"></i></button>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div><strong id="emailSender"></strong> <span class="text-muted">to me</span></div>
+                        <div class="text-muted"><span id="emailDate"></span> • <span id="emailTime"></span></div>
+                    </div>
+                    <div id="emailBody" class="email-body mb-4"></div>
+                </article>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/history.js') }}" defer></script>
 {% endblock %}

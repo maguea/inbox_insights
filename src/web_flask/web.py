@@ -1,46 +1,131 @@
 # tolu kolade
-from app import Flask, render_template, request, redirect
-# from pathlib import Path
+from flask import Flask, render_template, request, redirect, url_for, abort
+from flask import jsonify, render_template
+
 import sys
 import os
-from app import Flask, request, jsonify, render_template
-from src.lib.account.categories import save_categories, load_categories
-
-
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.lib.account.create_accounts import _create_account, _login
+from lib.account.create_accounts import _create_account, _login, _check_env
+from lib.account.categories import save_categories, load_categories
+from testing_extra import SAMPLE_EMAILS
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    result = _login()
+    result = _check_env()
     # TODO: check if user already has an account
-    if False:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html', code=result)
+    if result == False:
+        return redirect(url_for('client_settings'))
+    
+
+    return render_template('dashboard.html')
 
 @app.route('/config', methods=['GET', 'POST'])
 def client_settings():
+    # Check if .env file exists
+    env_exists = os.path.exists('.env')
+    connection_status = None
+    success = False
+    error = None
+    
     if request.method == 'POST':
         # Get form data
         username = request.form.get('username')
         password = request.form.get('password')
         server = request.form.get('server')
 
-
-        _create_account(username, password, server)
-        result = _login(username, password) # ideally use this to show status
-
-        # Redirect or render with success message
-        return render_template('settings.html', success=True, code=result)
+        try:
+            if not env_exists:
+                # First time setup - create account
+                _create_account(username, password, server)
+                result = _login(username, password)
+                
+                if result == 0:
+                    success = True
+                    connection_status = "success"
+                else:
+                    error = get_error_message(result)
+                    
+            else:
+                # .env exists - test connection with new credentials
+                result = _login(username, password)
+                
+                if result == 0:
+                    success = True
+                    connection_status = "success"
+                    # Update credentials in .env or database
+                    _create_account(username, password, server)
+                else:
+                    error = get_error_message(result)
+                    
+        except Exception as e:
+            error = f"Unexpected error: {str(e)}"
     
-    return render_template('settings.html')
+    # If .env exists and it's a GET request, test current connection
+    current_status = None
+    if env_exists and request.method == 'GET':
+        # You might want to get current credentials from .env
+        current_user = get_current_user()  # You'll need to implement this
+        if current_user:
+            result = _login(current_user['username'], current_user['password'])
+            current_status = {
+                'status': 'success' if result == 0 else 'error',
+                'message': get_error_message(result) if result != 0 else "Successfully connected to email server",
+                'email': current_user['username']
+            }
+    
+    return render_template(
+        'settings.html',
+        env_exists=env_exists,
+        success=success,
+        error=error,
+        connection_status=connection_status,
+        current_status=current_status
+    )
+
+def get_error_message(result_code):
+    error_messages = {
+        1: "Incorrect email or password",
+        2: "Account not set up properly",
+        3: "Cannot connect to IMAP server"
+    }
+    return error_messages.get(result_code, "Unknown error occurred")
+
+def get_current_user():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        return {
+            'username': os.getenv('CLIENT_USER'),
+            'password': os.getenv('CLIENT_PASS')
+        }
+    except:
+        return None
 
 @app.route('/history')
 def view_all_emails():
-    return render_template('history.html')
+    return render_template('history.html', emails=SAMPLE_EMAILS)
+
+# List endpoint
+@app.get('/api/emails')
+def list_emails():
+    return jsonify([{
+        "id": e["id"],
+        "sender": e["sender"],
+        "subject": e["subject"],
+        "preview": e["preview"],
+        "timestamp": e["timestamp"],
+        "date": e["date"]
+    } for e in SAMPLE_EMAILS])
+
+# Detail endpoint
+@app.get('/api/emails/<int:eid>')
+def get_email(eid: int):
+    for e in SAMPLE_EMAILS:
+        if e["id"] == eid:
+            return jsonify(e)
+    abort(404)
 
 
 @app.get("/categories")
@@ -129,3 +214,4 @@ def categories_delete(name):
 
 if __name__ == '__main__':
     app.run(port=6222, debug=True)
+

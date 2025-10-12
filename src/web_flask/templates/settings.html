@@ -5,14 +5,41 @@
 {% block page_content %}
 <div class="page-header mb-4">
     <h1>Email Settings</h1>
-    <p class="text-muted">Configure your IMAP email account settings</p>
+    <p class="text-muted">
+        {% if env_exists %}
+        Manage your email account connection
+        {% else %}
+        Set up your email account
+        {% endif %}
+    </p>
 </div>
 
+<!-- Current Connection Status (only show if .env exists) -->
+{% if env_exists and current_status %}
+<div class="alert alert-{{ 'success' if current_status.status == 'success' else 'warning' }} alert-dismissible fade show"
+    role="alert">
+    <strong>Current Status:</strong> {{ current_status.message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- Success/Error Alerts from Form Submission -->
 {% if success %}
 <div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ code }}
+    <strong>Success!</strong>
+    {% if env_exists %}
+    Email credentials updated and connection verified!
+    {% else %}
+    Email account set up successfully!
+    {% endif %}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    <meta http-equiv="refresh" content="3; url=/" />
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Error:</strong> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 {% endif %}
 
@@ -22,31 +49,103 @@
             <div class="mb-3">
                 <label for="username" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="username" name="username"
-                    placeholder="your.email@example.com" required>
+                    placeholder="{% if current_status and current_status.email %}{{ current_status.email }}{% else %}mail@example.com{% endif %}"
+                    value="{% if current_status and current_status.email %}{{ current_status.email }}{% endif %}"
+                    required>
                 <div class="form-text">Your full email address</div>
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label">
+                    {% if env_exists %}New Password{% else %}Password{% endif %}
+                </label>
                 <input type="password" class="form-control" id="password" name="password"
-                    placeholder="Your email password" required>
-                <div class="form-text">Your email account password or app password</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="server" class="form-label">IMAP Server</label>
-                <input type="text" class="form-control" id="server" name="server" placeholder="imap.example.com"
-                    value="imap.gmail.com" required>
+                    placeholder="{% if env_exists %}Enter new password to update{% else %}Your email password{% endif %}"
+                    required>
                 <div class="form-text">
-                    imap.gmail.com, outlook.office365.com
+                    {% if env_exists %}
+                    Enter your current or new password to update credentials
+                    {% else %}
+                    Your email account password or app password
+                    {% endif %}
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">IMAP Server</label>
+                <div class="btn-group" role="group" aria-label="IMAP Server selection">
+                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" checked>
+                    <label class="btn btn-outline-primary" for="gmail">Gmail</label>
+
+                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com">
+                    <label class="btn btn-outline-primary" for="outlook">Outlook</label>
+                </div>
+                <div class="form-text mt-2">Select your email provider</div>
+            </div>
+
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button type="reset" class="btn btn-outline-secondary me-md-2">Reset</button>
-                <button type="submit" class="btn btn-primary">Save Settings</button>
+                <button type="submit" class="btn btn-primary">
+                    {% if env_exists %}
+                    Update Email
+                    {% else %}
+                    Save & Connect
+                    {% endif %}
+                </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Help Section -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Connection Help</h5>
+    </div>
+    <div class="card-body">
+        <h6>Common IMAP Servers:</h6>
+        <ul class="mb-3">
+            <li><strong>Gmail:</strong> imap.gmail.com (requires App Password)</li>
+            <li><strong>Outlook/Office365:</strong> outlook.office365.com</li>
+        </ul>
+
+        <h6>App Passwords:</h6>
+        <p class="mb-0">For Gmail and other services, you may need to generate an App Password instead of using your
+            regular password.</p>
+    </div>
+</div>
+
+// Add this script to your template if you want AJAX
+<script>
+    document.getElementById('settingsForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        // Show loading
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Testing Connection...';
+        submitBtn.disabled = true;
+
+        try {
+            const formData = new FormData(this);
+
+            const response = await fetch('{{ url_for("client_settings") }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            // For AJAX, you'd want to modify your Flask route to return JSON
+            // For now, we'll let the form submit normally
+            this.submit();
+
+        } catch (error) {
+            console.error('Error:', error);
+            this.submit(); // Fallback to normal form submission
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
 {% endblock %}
