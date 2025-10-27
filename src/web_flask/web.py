@@ -4,10 +4,12 @@ from flask import jsonify, render_template
 
 import sys
 import os
+import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from lib.account.create_accounts import _create_account, _login, _check_env
 from lib.account.categories import save_categories, load_categories
 from testing_extra import SAMPLE_EMAILS
+from lib.email_scraper.email_scraper import Gather
 
 app = Flask(__name__)
 
@@ -18,7 +20,9 @@ def index():
     if result == False:
         return redirect(url_for('client_settings'))
     
-
+    if not os.path.exists('cached_emails.json'):
+        fetch_and_store_emails()
+    
     return render_template('dashboard.html')
 
 @app.route('/config', methods=['GET', 'POST'])
@@ -43,6 +47,7 @@ def client_settings():
                 
                 if result == 0:
                     success = True
+                    fetch_and_store_emails()
                     connection_status = "success"
                 else:
                     error = get_error_message(result)
@@ -56,6 +61,7 @@ def client_settings():
                     connection_status = "success"
                     # Update credentials in .env or database
                     _create_account(username, password, server)
+                    fetch_and_store_emails()
                 else:
                     error = get_error_message(result)
                     
@@ -105,11 +111,23 @@ def get_current_user():
 
 @app.route('/history')
 def view_all_emails():
-    return render_template('history.html', emails=SAMPLE_EMAILS)
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        # Fallback to sample emails if no cache exists
+        emails = SAMPLE_EMAILS
+    return render_template('history.html', emails=emails)
 
 # List endpoint
 @app.get('/api/emails')
 def list_emails():
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        emails = SAMPLE_EMAILS
+    
     return jsonify([{
         "id": e["id"],
         "sender": e["sender"],
@@ -117,12 +135,18 @@ def list_emails():
         "preview": e["preview"],
         "timestamp": e["timestamp"],
         "date": e["date"]
-    } for e in SAMPLE_EMAILS])
+    } for e in emails])
 
 # Detail endpoint
 @app.get('/api/emails/<int:eid>')
 def get_email(eid: int):
-    for e in SAMPLE_EMAILS:
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        emails = SAMPLE_EMAILS
+    
+    for e in emails:
         if e["id"] == eid:
             return jsonify(e)
     abort(404)
@@ -211,6 +235,26 @@ def categories_delete(name):
         save_categories(new_cats)
     return jsonify({"deleted": deleted})
 
+def fetch_and_store_emails():
+    try:
+        current_user = get_current_user()
+        if not current_user:
+            return None
+            
+        gatherer = Gather(
+            current_user['username'], 
+            current_user['password'],
+            os.getenv('CLIENT_SERVER', 'imap.gmail.com')
+        )
+        emails = gatherer._fetch_unread_and_mark_seen()  # Already in correct format!
+        
+        with open('cached_emails.json', 'w') as f:
+            json.dump(emails, f)
+            
+        return emails
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 if __name__ == '__main__':
     app.run(port=6222, debug=True)

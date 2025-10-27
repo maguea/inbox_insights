@@ -9,9 +9,9 @@ import os
 def _create_account(user, password, server):
     'Creates and stores account info into dotenv file'
     env_file_path = Path('.env')
-    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_USER', value_to_set='some_value')
-    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_PASS', value_to_set='new_secret')
-    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_SERVER', value_to_set='example.imap.com')
+    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_USER', value_to_set=user)
+    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_PASS', value_to_set=password)
+    set_key(dotenv_path=env_file_path, key_to_set='CLIENT_SERVER', value_to_set=server)
 
 def _login(user, password):
     '''
