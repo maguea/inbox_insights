@@ -1,9 +1,10 @@
 # tolu kolade
 from flask import Flask, render_template, request, redirect, url_for
 
-from src.lib.account.create_accounts import _create_account, _login, _check_env
-from src.web_flask.web_extras.web_functions_temp import get_error_message, get_current_user
+from src.lib.account.create_accounts import _check_env
+from src.web_flask.web_extras.web_functions_temp import get_current_user, paginate
 from src.web_flask.web_extras.web_api import api_bp
+from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
 
 app = Flask(__name__)
 app.register_blueprint(api_bp)
@@ -11,7 +12,6 @@ app.register_blueprint(api_bp)
 @app.route('/')
 def index():
     result = _check_env()
-    # TODO: check if user already has an account
     if result == False:
         return redirect(url_for('client_settings'))
     
@@ -28,3 +28,15 @@ def client_settings():
 @app.route('/history')
 def view_all_emails():
     return render_template('history.html')
+
+@app.get("/history/page/<int:page>")
+def history_page(page):
+    emails, page, pages = paginate(SAMPLE_EMAILS, page)
+    # If page is out of range, return 204 (no content) so the scroller stops.
+    if not emails and page > 1:
+        return ("", 204)
+    # Return only the batch items HTML (Jinja fragment)
+    return render_template(
+        "partials/email_items.html",
+        emails=emails
+    )

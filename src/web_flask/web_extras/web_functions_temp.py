@@ -1,12 +1,7 @@
 # tolu kolade
-from flask import Flask, render_template, request, redirect, url_for, abort
-from flask import jsonify, render_template
-
-import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.lib.account.create_accounts import _create_account, _login, _check_env
-from src.lib.account.categories import save_categories, load_categories
+from dotenv import load_dotenv
+from math import ceil
 from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
 
 def get_error_message(result_code):
@@ -20,7 +15,6 @@ def get_error_message(result_code):
 
 def get_current_user():
     try:
-        from dotenv import load_dotenv
         load_dotenv()
         return {
             'username': os.getenv('CLIENT_USER'),
@@ -28,3 +22,14 @@ def get_current_user():
         }
     except:
         return None
+
+PER_PAGE = 20
+
+def paginate(items, page, per_page=PER_PAGE):
+    total = len(items)
+    pages = max(1, ceil(total / per_page))
+    if page < 1 or page > pages:
+        return [], page, pages
+    start = (page - 1) * per_page
+    end = start + per_page
+    return items[start:end], page, pages

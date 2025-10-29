@@ -12,7 +12,7 @@ venv/
 .venv/
 
 # IDE/Editor files
-.vscode/
+.vscode/*
 .idea/
 *.swp
 *.bak

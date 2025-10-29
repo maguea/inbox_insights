@@ -8,14 +8,14 @@ from src.web_flask.web_extras.web_functions_temp import get_error_message, get_c
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-@api_bp.get('/api/valid_email')
+@api_bp.get('/valid_email')
 def check_email_account():
     user = get_current_user()
     result = _login(user=user['username'],password=user['password'])
     
     return jsonify({'msg': get_error_message(result)})
 
-@api_bp.post('/api/register')
+@api_bp.post('/register')
 def add_email():
 # Get form data
     username = request.form.get('username')
@@ -27,7 +27,7 @@ def add_email():
     return jsonify({'msg': get_error_message(result)})
 
 # List endpoint
-@api_bp.get('/api/emails')
+@api_bp.get('/emails')
 def list_emails():
     return jsonify([{
         "id": e["id"],
@@ -39,7 +39,7 @@ def list_emails():
     } for e in SAMPLE_EMAILS])
 
 # Detail endpoint
-@api_bp.get('/api/emails/<int:eid>')
+@api_bp.get('/emails/<int:eid>')
 def get_email(eid: int):
     for e in SAMPLE_EMAILS:
         if e["id"] == eid:
