@@ -1,8 +1,9 @@
 # tolu kolade
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, redirect, url_for
+import os, json
 
 from src.lib.account.create_accounts import _check_env
-from src.web_flask.web_extras.web_functions_temp import get_current_user, paginate
+from src.web_flask.web_extras.web_functions_temp import get_current_user, paginate, fetch_and_store_emails
 from src.web_flask.web_extras.web_api import api_bp
 from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
 

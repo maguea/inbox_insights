@@ -2,6 +2,8 @@
 import os
 from dotenv import load_dotenv
 from math import ceil
+import json
+
 from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
 from src.lib.email_scraper.email_scraper import Gather
 

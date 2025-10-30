@@ -1,5 +1,6 @@
 # tolu kolade
 from flask import Blueprint, request, abort, jsonify
+import os, json
 
 from src.lib.account.create_accounts import _create_account, _login, _check_env
 from src.lib.account.categories import save_categories, load_categories
@@ -41,6 +42,12 @@ def list_emails():
 # Detail endpoint
 @api_bp.get('/emails/<int:eid>')
 def get_email(eid: int):
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        emails = SAMPLE_EMAILS
+
     for e in SAMPLE_EMAILS:
         if e["id"] == eid:
             return jsonify(e)
