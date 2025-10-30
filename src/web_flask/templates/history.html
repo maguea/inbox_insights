@@ -10,29 +10,31 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="row g-0">
+
             <!-- Sidebar -->
-            <aside class="col-md-4 col-lg-3 border-end">
+            <aside class="col-md-4 col-lg-3 border-end d-flex flex-column">
                 <div class="p-3 border-bottom">
                     <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
                         <input id="emailSearch" type="text" class="form-control" placeholder="Search emails..."
-                            autocomplete="off">
+                            autocomplete="off" aria-label="Search emails">
                     </div>
                 </div>
 
-                <div id="emailList" class="list-group list-group-flush email-list"
-                    style="max-height:70vh;overflow-y:auto;">
-                    {% for email in emails %}
-                    <button type="button" class="list-group-item list-group-item-action email-item text-start"
-                        data-email-id="{{ email.id }}" data-detail-url="{{ url_for('get_email', eid=email.id) }}">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <span class="fw-semibold text-truncate">{{ email.sender.split('<')[0] }}</span>
-                                    <small class="text-muted">{{ email.timestamp }}</small>
-                        </div>
-                        <div class="small text-muted text-truncate">{{ email.subject }}</div>
-                        <div class="small text-muted text-truncate">{{ email.preview }}</div>
-                    </button>
-                    {% endfor %}
+                <div id="emailList" class="list-group list-group-flush email-list flex-grow-1"
+                    style="max-height:70vh;overflow-y:auto;" data-next-page="1" aria-live="polite" aria-busy="false">
+                    <!-- items are appended here via /history/page/<page> -->
+                    <div id="loadSentinel" class="text-center py-3 small text-muted">
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span class="ms-2">Loading…</span>
+                    </div>
+                </div>
+
+                <!-- Optional manual paginator (fallback for old browsers) -->
+                <div class="border-top p-2 text-center">
+                    <button id="loadMoreBtn" class="btn btn-outline-secondary btn-sm" type="button">Load more</button>
                 </div>
             </aside>
 
@@ -48,17 +50,26 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h3 id="emailSubject" class="h4 mb-0"></h3>
                         <div class="btn-group">
-                            <button class="btn btn-outline-secondary btn-sm" title="Delete"><i
-                                    class="bi bi-trash-fill"></i></button>
+                            <button class="btn btn-outline-secondary btn-sm" title="Delete" disabled>
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
                         </div>
                     </div>
+
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div><strong id="emailSender"></strong> <span class="text-muted">to me</span></div>
-                        <div class="text-muted"><span id="emailDate"></span> • <span id="emailTime"></span></div>
+                        <div>
+                            <strong id="emailSender"></strong>
+                            <span class="text-muted">to me</span>
+                        </div>
+                        <div class="text-muted">
+                            <span id="emailDate"></span> • <span id="emailTime"></span>
+                        </div>
                     </div>
+
                     <div id="emailBody" class="email-body mb-4"></div>
                 </article>
             </main>
+
         </div>
     </div>
 </div>
