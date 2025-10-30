@@ -30,6 +30,11 @@ def add_email():
 # List endpoint
 @api_bp.get('/emails')
 def list_emails():
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        emails = SAMPLE_EMAILS
     return jsonify([{
         "id": e["id"],
         "sender": e["sender"],
@@ -37,7 +42,7 @@ def list_emails():
         "preview": e["preview"],
         "timestamp": e["timestamp"],
         "date": e["date"]
-    } for e in SAMPLE_EMAILS])
+    } for e in emails])
 
 # Detail endpoint
 @api_bp.get('/emails/<int:eid>')
@@ -48,7 +53,7 @@ def get_email(eid: int):
     else:
         emails = SAMPLE_EMAILS
 
-    for e in SAMPLE_EMAILS:
+    for e in emails:
         if e["id"] == eid:
             return jsonify(e)
     abort(404)

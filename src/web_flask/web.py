@@ -42,7 +42,12 @@ def view_all_emails():
 
 @app.get("/history/page/<int:page>")
 def history_page(page):
-    emails, page, pages = paginate(SAMPLE_EMAILS, page)
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            email = json.load(f)
+    else:
+        email = SAMPLE_EMAILS
+    emails, page, pages = paginate(email, page)
     # If page is out of range, return 204 (no content) so the scroller stops.
     if not emails and page > 1:
         return ("", 204)
