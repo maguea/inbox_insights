@@ -1,141 +1,157 @@
-
-// static/js/history.js
 (function () {
-  'use strict';
+  const listEl = document.getElementById('emailList');
+  const sentinel = document.getElementById('loadSentinel');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const searchInput = document.getElementById('emailSearch');
 
-  function log() {
-    if (window && window.console) {
-      console.log('[history.js]', ...arguments);
-    }
-  }
-  function err() {
-    if (window && window.console) {
-      console.error('[history.js]', ...arguments);
-    }
-  }
+  const subjectEl = document.getElementById('emailSubject');
+  const senderEl = document.getElementById('emailSender');
+  const dateEl = document.getElementById('emailDate');
+  const timeEl = document.getElementById('emailTime');
+  const bodyEl = document.getElementById('emailBody');
+  const placeholder = document.getElementById('panePlaceholder');
+  const detailPane = document.getElementById('paneDetail');
 
-  function ready(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn, { once: true });
-    } else {
-      fn();
-    }
-  }
+  let loading = false;
+  let exhausted = false;
+  let observer = null;
+  let activeId = null;
+  let filterText = '';
 
-  ready(function () {
-    const listEl = document.getElementById('emailList');
-    const searchEl = document.getElementById('emailSearch');
-    const placeholder = document.getElementById('panePlaceholder');
-    const detail = document.getElementById('paneDetail');
-    const subjectEl = document.getElementById('emailSubject');
-    const senderEl = document.getElementById('emailSender');
-    const dateEl = document.getElementById('emailDate');
-    const timeEl = document.getElementById('emailTime');
-    const bodyEl = document.getElementById('emailBody');
-    const contentEl = document.getElementById('emailContent');
+  // --- helpers
+  const setBusy = (busy) => {
+    listEl.setAttribute('aria-busy', busy ? 'true' : 'false');
+    sentinel.style.display = busy ? '' : 'none';
+  };
 
-    if (!listEl) {
-      err('emailList not found in DOM. Is the scripts block included in base.html? Are IDs correct?');
-      return;
-    }
+  const nextPage = () => parseInt(listEl.dataset.nextPage || '1', 10);
 
-    log('initialized');
+  const bumpPage = () => {
+    const p = nextPage();
+    listEl.dataset.nextPage = (p + 1).toString();
+  };
 
-    const show = (el) => el && el.classList.remove('d-none');
-    const hide = (el) => el && el.classList.add('d-none');
+  const attachItemHandlers = (root) => {
+    root.querySelectorAll('.email-item').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-email-id');
+        if (!id) return;
+        activeId = id;
 
-    function banner(msg, type = 'danger') {
-      const div = document.createElement('div');
-      div.className = `alert alert-${type} m-3`;
-      div.role = 'alert';
-      div.textContent = msg;
-      contentEl?.prepend(div);
-      setTimeout(() => div.remove(), 5000);
-    }
+        // highlight active
+        listEl.querySelectorAll('.email-item.active').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
 
-    function clearActive() {
-      listEl.querySelectorAll('.email-item.active').forEach(n => n.classList.remove('active'));
-    }
-    function setActive(btn) {
-      btn.classList.add('active');
-      btn.scrollIntoView({ block: 'nearest' });
-    }
+        // fetch detail JSON
+        try {
+          const res = await fetch(`/api/emails/${id}`);
+          if (!res.ok) throw new Error(`Failed detail ${res.status}`);
+          const email = await res.json();
 
-    async function fetchEmail(url) {
-      log('fetching', url);
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if (!res.ok) throw new Error(`Failed to load email: ${res.status}`);
-      return res.json();
-    }
+          // fill pane
+          subjectEl.textContent = email.subject || '(no subject)';
+          senderEl.textContent = email.sender || '';
+          dateEl.textContent = email.date || '';
+          timeEl.textContent = email.timestamp || '';
+          bodyEl.innerHTML = email.body || `<p class="text-muted">(No body)</p>`;
 
-    function renderEmail(email) {
-      subjectEl.textContent = email.subject || '';
-      senderEl.textContent = email.sender || '';
-      dateEl.textContent = email.date || '';
-      timeEl.textContent = email.timestamp || '';
-      bodyEl.innerHTML = email.body || '';
+          placeholder.classList.add('d-none');
+          detailPane.classList.remove('d-none');
+          detailPane.focus();
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    });
+  };
 
-    }
+  const appendItems = (html) => {
+    const frag = document.createElement('div');
+    frag.innerHTML = html;
 
-    async function openEmail(btn) {
-      const url = btn.dataset.detailUrl || (btn.dataset.emailId ? `/api/emails/${btn.dataset.emailId}` : '');
-      if (!url) {
-        err('No detail URL on item', btn);
+    // Move children BEFORE sentinel
+    const items = Array.from(frag.children);
+    items.forEach(ch => {
+      // simple client side filter on newly appended items
+      if (filterText) {
+        const t = ch.innerText.toLowerCase();
+        if (!t.includes(filterText)) return;
+      }
+      listEl.insertBefore(ch, sentinel);
+    });
+
+    attachItemHandlers(listEl);
+  };
+
+  const loadPage = async () => {
+    if (loading || exhausted) return;
+    loading = true;
+    setBusy(true);
+    try {
+      const p = nextPage();
+      const res = await fetch(`/history/page/${p}`, { headers: { 'X-Requested-With': 'fetch' } });
+      if (res.status === 204) {
+        exhausted = true;
+        sentinel.innerHTML = '<span class="text-muted">No more emails.</span>';
+        setBusy(false);
+        loading = false;
         return;
       }
-
-      hide(placeholder);
-      hide(detail);
-
-      const loading = document.createElement('div');
-      loading.id = 'loadingIndicator';
-      loading.className = 'text-center py-5';
-      loading.innerHTML = '<div class="spinner-border" role="status"></div><p class="mt-2 text-muted">Loading…</p>';
-      detail.parentElement.appendChild(loading);
-
-      try {
-        const email = await fetchEmail(url);
-        renderEmail(email);
-        clearActive();
-        setActive(btn);
-        show(detail);
-      } catch (e) {
-        err(e);
-        banner(e.message || 'Failed to open email', 'danger');
-        show(placeholder);
-      } finally {
-        loading.remove();
-      }
+      if (!res.ok) throw new Error(`Failed page ${p}: ${res.status}`);
+      const html = await res.text();
+      appendItems(html);
+      bumpPage();
+    } catch (err) {
+      console.error(err);
+      sentinel.innerHTML = '<span class="text-danger">Failed to load.</span>';
+    } finally {
+      setBusy(false);
+      loading = false;
     }
+  };
 
-    // Delegated click (with document-level fallback for frameworks that swap DOM)
-    document.addEventListener('click', (ev) => {
-      const btn = ev.target.closest('.email-item');
-      if (btn && document.body.contains(btn)) {
-        ev.preventDefault();
-        log('click item', btn.dataset.emailId || btn.dataset.detailUrl);
-        openEmail(btn);
-      }
+  // IntersectionObserver for infinite scroll
+  const setupObserver = () => {
+    if (!('IntersectionObserver' in window)) return;
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) loadPage();
+      });
+    }, { root: listEl, threshold: 0.1 });
+
+    observer.observe(sentinel);
+  };
+
+  // Fallback button
+  loadMoreBtn.addEventListener('click', loadPage);
+
+  // Simple client-side filter of rendered items
+  const debounce = (fn, ms) => {
+    let t = 0;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), ms);
+    };
+  };
+
+  const applyFilter = () => {
+    const q = filterText;
+    const all = listEl.querySelectorAll('.email-item');
+    all.forEach(el => {
+      const text = el.innerText.toLowerCase();
+      el.style.display = q ? (text.includes(q) ? '' : 'none') : '';
     });
+  };
 
-    // Search filter
-    let timer;
-    searchEl?.addEventListener('input', (ev) => {
-      clearTimeout(timer);
-      const q = (ev.target.value || '').toLowerCase().trim();
-      timer = setTimeout(() => {
-        listEl.querySelectorAll('.email-item').forEach(btn => {
-          const text = btn.textContent.toLowerCase();
-          btn.classList.toggle('d-none', q && !text.includes(q));
-        });
-      }, 120);
-    });
+  searchInput.addEventListener('input', debounce((e) => {
+    filterText = (e.target.value || '').toLowerCase().trim();
+    applyFilter();
+  }, 150));
 
-    // Optional: auto-open first
-    const first = listEl.querySelector('.email-item');
-    if (first) {
-      log('auto-open first');
-      openEmail(first);
-    }
+  // initial boot
+  document.addEventListener('DOMContentLoaded', () => {
+    setupObserver();
+    loadPage(); // fetch first page immediately
   });
 })();

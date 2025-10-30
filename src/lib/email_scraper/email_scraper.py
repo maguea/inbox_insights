@@ -5,7 +5,7 @@ import json
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
-from lib.email_scraper.email_consts import EMAIL_CONST
+from src.lib.email_scraper.email_consts import EMAIL_CONST
 
 
 class Gather:
