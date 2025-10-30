@@ -15,6 +15,9 @@ def index():
     if result == False:
         return redirect(url_for('client_settings'))
     
+    if not os.path.exists('cached_emails.json'):
+        fetch_and_store_emails()
+    
     return render_template('dashboard.html')
 
 @app.route('/config')
@@ -27,7 +30,14 @@ def client_settings():
 
 @app.route('/history')
 def view_all_emails():
-    return render_template('history.html')
+    if os.path.exists('cached_emails.json'):
+        with open('cached_emails.json', 'r') as f:
+            emails = json.load(f)
+    else:
+        # Fallback to sample emails if no cache exists
+        emails = SAMPLE_EMAILS
+    return render_template('history.html', emails=emails)
+
 
 @app.get("/history/page/<int:page>")
 def history_page(page):

@@ -28,3 +28,4 @@ tmp/
 # Sensitive data/config
 config.ini
 .env
+cached_emails.json
