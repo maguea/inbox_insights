@@ -16,7 +16,7 @@ SAMPLE_EMAILS = [
         "preview": "I attached the latest comps and Figma link. Main feedback is...",
         "timestamp": "9:12 AM",
         "date": "Oct 3, 2025",
-        "body": "<p>Notes from design review:</p><ol><li>Reduce hero height</li><li>Unify button radius</li><li>Add dark mode tokens</li></ol><p>– Jane</p>",
+        "body": "<p>Notes from design review:</p><ol><li>Reduce hero height</li><li>Unify button radius</li><li>Add dark mode tokens</li></ol><p>- Jane</p>",
         "attachments": ["homepage-v7.fig", "tokens.json"]
     },
     {
@@ -59,7 +59,7 @@ SAMPLE_EMAILS = [
         "preview": "Got your deck — a couple questions before I set time with partners...",
         "timestamp": "7:22 PM",
         "date": "Oct 7, 2025",
-        "body": "<p>Thanks for sending the deck.</p><p>Two questions:</p><ul><li>Unit economics post-scale?</li><li>Churn assumptions validated?</li></ul><p>– Mark</p>",
+        "body": "<p>Thanks for sending the deck.</p><p>Two questions:</p><ul><li>Unit economics post-scale?</li><li>Churn assumptions validated?</li></ul><p>- Mark</p>",
         "attachments": ["deck-v3.pdf"]
     },
     {
@@ -349,7 +349,7 @@ SAMPLE_EMAILS = [
         "preview": "Staying in Philadelphia — Dec 12-15...",
         "timestamp": "5:10 PM",
         "date": "Oct 19, 2025",
-        "body": "<p>Trip confirmed Dec 12–15.</p>",
+        "body": "<p>Trip confirmed Dec 12-15.</p>",
         "attachments": ["itinerary.pdf"]
     },
     {
