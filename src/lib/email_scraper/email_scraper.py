@@ -5,7 +5,6 @@ from email.header import decode_header
 from email.utils import parseaddr
 from lib.email_scraper.email_consts import EMAIL_CONST
 
-
 class Gather:
     def __init__(self, username, password, imap_server, mailbox='INBOX'):
         self.username = username
