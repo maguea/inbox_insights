@@ -1,0 +1,12 @@
+{# renders a batch of list items; used by /history/page/<page> #}
+    {% for email in emails %}
+    <button type="button" class="list-group-item list-group-item-action email-item text-start"
+        data-email-id="{{ email.id }}">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+            <span class="fw-semibold text-truncate">{{ (email.sender or '').split('<')[0] }}</span>
+                    <small class="text-muted">{{ email.timestamp }}</small>
+        </div>
+        <div class="small text-muted text-truncate">{{ email.subject }}</div>
+        <div class="small text-muted text-truncate">{{ email.preview }}</div>
+    </button>
+    {% endfor %}

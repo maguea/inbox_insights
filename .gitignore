@@ -12,12 +12,13 @@ venv/
 .venv/
 
 # IDE/Editor files
-.vscode/
+.vscode/*
 .idea/
 *.swp
 *.bak
 *~
 .DS_Store
+!/.vscode/launch.json
 
 # Logs and temporary files
 *.log
