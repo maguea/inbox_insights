@@ -28,3 +28,6 @@ tmp/
 # Sensitive data/config
 config.ini
 .env
+
+# remove peer.conf files. exposes keys and IP addr
+vpn confs/*.conf

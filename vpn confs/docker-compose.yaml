@@ -1,0 +1,61 @@
+# i dont remember but you may need to manually create, chmod and chown the ./pgamin-*, ./pgdata, and ./wireguard-config
+# to find the the container ip, run `docker inspect <container-name>` and look for the addr near the bottom
+services:
+  db:
+    image: postgres
+    container_name: pgdb
+    restart: unless-stopped
+    user: 999:999
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: inboxdb
+      POSTGRES_USER: userInsight
+      POSTGRES_PASSWORD: 0Pe86hMinZkc
+    volumes:
+      - ./pgdata:/var/lib/postgresql
+    networks:
+      - largeScale
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: unless-stopped
+    user: 1000:1000
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: insighti338@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 7aYbz41gtFBn
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin-log:/var/log/pgadmin
+    depends_on:
+      - db
+    networks:
+      - largeScale
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - PEERS=4
+      - SERVERPORT=51820
+    volumes:
+      - ./wireguard-config:/config
+      - /lib/modules:/lib/modules:ro
+    ports:
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    networks:
+      - largeScale
+
+networks:
+  largeScale:
+    driver: bridge
