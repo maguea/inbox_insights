@@ -24,3 +24,10 @@ class EMAIL_CONST:
     MISSING_ACCOUNT = 2
     IMAP_CONN_FAIL = 3
     READ_FAIL = 4
+
+class DB_Const:
+    PG_DB = os.getenv('PG_DB')
+    PG_USER = os.getenv('PG_USER')
+    PG_PASS = os.getenv('PG_PASS')
+    PG_HOST = os.getenv('PG_HOST')
+    PG_PORT = os.getenv('PG_PORT')
