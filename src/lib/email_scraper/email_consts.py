@@ -31,3 +31,5 @@ class DB_Const:
     PG_PASS = os.getenv('PG_PASS')
     PG_HOST = os.getenv('PG_HOST')
     PG_PORT = os.getenv('PG_PORT')
+
+    DB_ERROR = 5
