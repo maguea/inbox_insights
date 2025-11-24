@@ -1,34 +1,45 @@
 # Matt 4:4
 
 import psycopg2 as pg
-#from src.lib.email_scraper.email_consts import DB_Const
-from email_consts import DB_Const
+# from src.lib.email_scraper.email_consts import DB_Const
+from email_consts import DB_Const, EMAIL_CONST
 from datetime import datetime as dt
 from datetime import timezone as tz
 
 class DB_Connection:
+    
+    def _check_pass(conn, user_id, password):
+        query = 'SELECT user_pass FROM public.user_data WHERE user_id = %s'
+        cur = conn.cursor()
+        try:
+            cur.execute(query, (user_id,))
+            check = cur.fetchall()
+            print(check)
 
-    def _adapter(data):
+            if check is None:
+                return EMAIL_CONST.MISSING_ACCOUNT
+            elif check == password:
+                return EMAIL_CONST.LOGIN_SUCCESS
+            else:
+                return EMAIL_CONST.INCORRECT_ACCOUNT_INFO
+        except:
+            print('User error')
+        
+        return DB_Const.DB_ERROR
+    
+    def _add_email_data(conn, data):
         '''
-        Change to format into the following format:
-        'id' = int (see opcode breakdown)
-        'user_id' = string (username),
-        'sender_id' = string (sender email address),
-        'category' = string (add '-' in the beginning for private),
-        'data' : text (long string) email body/summary,
-        'collected_date' : datetime (collected date, will default to now, UTC),
-        'delete_date' : datetime (delete date)
+        The param data should ideally be a single tuple or 1D array
         '''
-        adapted = {
-            'id': None,
-            'user_id': None,
-            'sender_id' : None,
-            'category' : None,
-            'data' : None,
-            'collected_date' : None,
-            'delete_date' : None
-        }
-        return adapted
+        # Maybe format into tuple before
+        query = '''INSERT INTO public.email_data (user_id, sender_id, category, data, delete_date) 
+        VALUES (%s, %s, %s, %s, %s)'''
+        cur = conn.cursor()
+        try:
+            cur.execute(query, (data,))
+            conn.commit()
+        except:
+            print('Unable to write data')
 
     def _delete_old_emails(conn):
         now = dt.now(tz.utc)
@@ -68,7 +79,7 @@ class DB_Connection:
         cur = conn.cursor()
         cur.execute(query, (user_id,))
         data = cur.fetchall()
-        print(data) # Test format
+        return [list(t) for t in data]
 
     def _gather_data_by_sender(conn, user_id, sender_id):
         '''
@@ -79,7 +90,7 @@ class DB_Connection:
         cur = conn.cursor()
         cur.execute(query, (user_id, sender_id,))
         data = cur.fetchall()
-        print(data) # Test format
+        return [list(t) for t in data]
 
     def _gather_data_by_category(conn, category):
         '''
@@ -90,11 +101,10 @@ class DB_Connection:
         cur = conn.cursor()
         cur.execute(query, (category,))
         data = cur.fetchall()
-        print(data) # Test format
+        return [list(t) for t in data]
 
 
 if __name__ == '__main__':
     cursor = DB_Connection._test_connection()
     cursor.execute('SELECT * FROM public.email_data')
     print(cursor.fetchall())
-
