@@ -50,7 +50,7 @@ class DB_Connection:
         '''
         cur = self.conn.cursor()
         try:
-            cur.execute(query, (args,))
+            cur.execute(query, args)
             self.conn.commit()
         except:
             print('DB Commit Error')
@@ -65,11 +65,11 @@ class DB_Connection:
         '''
         cur = self.conn.cursor()
         try:
-            cur.execute(query, (args,))
+            cur.execute(query, args)
             data = cur.fetchall()
             return data
         except:
-            print('DB Fetch Error')
+            print('ERROR: DB Fetch Error _get()')
             return DB_CONST.DB_ERROR
     
 

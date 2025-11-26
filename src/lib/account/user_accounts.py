@@ -1,30 +1,23 @@
 # Matt 4:4
+# this will be experimental where the user can login into inbox insight. i moved the imap login things to email/email_actions.py -tolu
 from src.lib.database.db_actions import DB_Actions
-from src.lib.email_scraper.email_scraper import Gather
 from src.lib import DB_CONST, EMAIL_CONST
 
-def _create_account(user, password, server):
+def _user_create_account(user, password):
     'checks if account exist. stores if new'
     db = DB_Actions()
     exist = db._check_pass(user_id=user, password=password)
     if exist != EMAIL_CONST.LOGIN_SUCCESS: # does not exist
+        print("STATUS: creating a new user")
         db._add_new_user(user_id=user, password=password)
     
 
-def _login(user, password, server):
+def _login(user, password):
     '''
     Checks basic connection.
         Returns: 
         - 0: Success 
         - 3: IMAP server connection failed
     '''
-    user_connection_check = Gather(user, password, server)
-
-    try:
-        user_connection_check._connect()
-        # Disconnects for security
-        user_connection_check._disconnect()
-    except:
-        return EMAIL_CONST.IMAP_CONN_FAIL
-    
-    return EMAIL_CONST.LOGIN_SUCCESS
+    db = DB_Actions()
+    return db._check_pass((user, password))

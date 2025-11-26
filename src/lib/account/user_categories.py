@@ -14,6 +14,7 @@ def save_categories(categories: list[dict]):
         "days_until_delete": 30
       }
     """
+    # TODO: implement
     set_key(str(ENV_PATH), ENV_KEY, json.dumps(categories))
 
 def load_categories(user, password):

@@ -1,19 +1,22 @@
 # tolu kolade
-from flask import request, abort, jsonify
+from flask import request, session, abort, jsonify
 from . import api_bp
 
-from src.lib.account.create_accounts import _create_account, _login
-from src.lib.account.categories import save_categories, load_categories
+from src.lib.email.email_actions import _email_login, _email_save_key
+from src.lib.account.user_categories import save_categories, load_categories
+from src.lib.account.user_accounts import _user_create_account
 from src.lib import EMAIL_CONST, get_error_message
-
 
 @api_bp.post('/check_email')
 def check_email_account():
-    username = request.form.get('user')
-    password = request.form.get('pass')
-    server = request.form.get('server')
 
-    result = _login(username, password, server)
+    username = session.get('email_user')
+    server   = session.get('email_server')
+
+    if not username or not server:
+        return jsonify({'ok': False, 'msg': 'No email credentials in session'}), 400
+
+    result = _email_login(username, server)
     if result == EMAIL_CONST.LOGIN_SUCCESS:
         return jsonify({'ok': True})
     else:
@@ -23,14 +26,22 @@ def check_email_account():
 def add_email():
 # Get form data
     username = request.form.get('user')
-    password = request.form.get('pass')
+    key = request.form.get('key')
     server = request.form.get('server')
+    print(username + " " + key + " " + server)
 
-    result = _login(username, password, server)
+    result = _email_login(username, key, server)
     if result == EMAIL_CONST.IMAP_CONN_FAIL:
+        print("STATUS: failed to check IMAP to add_email()")
         return jsonify({'ok': False})
     
-    _create_account(username, password, server)
+    # _user_create_account(username, "") # TODO: remove later. user creation should be done elsewhere
+    _email_save_key(username, key)
+
+    # save to session
+    session['email_user'] = username
+    session['email_server'] = server
+
     return jsonify({'ok': True})
 
 # List endpoint

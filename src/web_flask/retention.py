@@ -4,10 +4,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from dotenv import load_dotenv
 
-from src.lib.account.create_accounts import _check_env, _login
+from lib.account.user_accounts import _check_env, _login
 from src.lib.email_scraper.email_consts import EMAIL_CONST
 from src.lib.email_scraper.email_scraper import Gather
-from src.lib.account.categories import load_categories
+from lib.account.user_categories import load_categories
 
 
 CACHE_PATH = Path("cached_emails.json")

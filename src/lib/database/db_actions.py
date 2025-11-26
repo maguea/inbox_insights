@@ -13,7 +13,7 @@ class DB_Actions:
         Check if user is in the database. return missing account, success, or incorrect account info
         '''
         query = 'SELECT user_pass FROM public.user_data WHERE user_id = %s'
-        check = self.conn._get(query=query, args=(user_id))
+        check = self.conn._get(query=query, args=(user_id,))
         print(check)
 
         if check is None:
@@ -69,10 +69,17 @@ class DB_Actions:
         
         :param credentials: tuple of username and password
         '''
-        query = 'SELECT priv_cats FROM public.user_data' \
-        'WHERE user_id = %s AND user_pass = %s' # TODO: hashing?
+        query = '''SELECT priv_cats FROM public.user_data
+        WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
         data = self.conn._get(query, credentials)
         return data
+    
+    def _gather_user_key(self, credentials) -> str:
+
+        query = '''SELECT user_key FROM public.user_data
+        WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
+        data = self.conn._get(query, credentials)
+        return data[0][0]
 
     # set
     def _add_email_data(self, data):
@@ -97,6 +104,18 @@ class DB_Actions:
         VALUES (%s, %s, %s)
         ON CONFLICT (user_id) DO UPDATE SET priv_cats = EXCLUDED.priv_cats''' # TODO: hashing?
         data = self.conn._set(query, credentials + (cats,)) # TODO: alex, can you check this logic?
+        return data
+    
+    def _add_email_key(self, credentials, key):
+        '''
+        saves or updates the user key to their email
+        
+        :param credentials: tuple of username, password
+        '''
+        query = '''INSERT INTO public.user_data (user_id, user_pass, user_key)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (user_id) DO UPDATE SET user_key = EXCLUDED.user_key'''
+        data = self.conn._set(query, credentials + (key,)) # TODO: alex, can you check this logic?
         return data
 
     #actions
