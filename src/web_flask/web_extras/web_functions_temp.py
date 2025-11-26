@@ -4,27 +4,7 @@ from dotenv import load_dotenv
 from math import ceil
 import json
 
-from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
 from src.lib.email_scraper.email_scraper import Gather
-
-def get_error_message(result_code):
-    error_messages = {
-        0: 'Success',
-        1: "Incorrect email or password",
-        2: "Account not set up properly",
-        3: "Cannot connect to IMAP server"
-    }
-    return error_messages.get(result_code, "Unknown error occurred")
-
-def get_current_user():
-    try:
-        load_dotenv()
-        return {
-            'username': os.getenv('CLIENT_USER'),
-            'password': os.getenv('CLIENT_PASS')
-        }
-    except:
-        return None
 
 PER_PAGE = 20
 

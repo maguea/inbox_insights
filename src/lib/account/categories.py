@@ -1,10 +1,6 @@
 # src/lib/account/categories.py
-import os, json
-from pathlib import Path
-from dotenv import set_key, load_dotenv
-
-ENV_PATH = Path(".env")
-ENV_KEY = "CATEGORIES"
+import json
+from src.lib.database.db_actions import DB_Actions
 
 def save_categories(categories: list[dict]):
     """
@@ -20,15 +16,9 @@ def save_categories(categories: list[dict]):
     """
     set_key(str(ENV_PATH), ENV_KEY, json.dumps(categories))
 
-def load_categories() -> list[dict]:
+def load_categories(user, password):
     """
-    Load categories list from .env. Returns [] if not found.
+    Load categories list from server.
     """
-    load_dotenv()
-    raw = os.getenv(ENV_KEY)
-    if not raw:
-        return []
-    try:
-        return json.loads(raw)
-    except:
-        return []
+    db = DB_Actions()
+    return db._gather_categories(user, password)

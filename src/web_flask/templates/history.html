@@ -66,13 +66,35 @@
                         </div>
                     </div>
 
-                    <div id="emailBody" class="email-body mb-4"></div>
+                    <div id="emailBody" class="email-body mb-4">
+                        <iframe id="emailBodyFrame" class="email-body-frame w-100 border-0"
+                            sandbox="allow-same-origin"></iframe>
+                    </div>
+
                 </article>
             </main>
 
         </div>
     </div>
 </div>
+<style>
+    /* Outer box */
+    .email-body {
+        height: 60vh;
+        /* make it nice and tall; tweak as you like */
+        max-height: 800px;
+        /* safety cap if you want */
+        overflow: hidden;
+        /* prevent the iframe from pushing beyond this box */
+    }
+
+    /* Iframe fills the box and scrolls inside */
+    .email-body-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}

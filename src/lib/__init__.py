@@ -1,5 +1,3 @@
-# Matt 4:4
-
 from dotenv import load_dotenv
 import os
 
@@ -25,7 +23,7 @@ class EMAIL_CONST:
     IMAP_CONN_FAIL = 3
     READ_FAIL = 4
 
-class DB_Const:
+class DB_CONST:
     PG_DB = os.getenv('PG_DB')
     PG_USER = os.getenv('PG_USER')
     PG_PASS = os.getenv('PG_PASS')
@@ -33,3 +31,15 @@ class DB_Const:
     PG_PORT = os.getenv('PG_PORT')
 
     DB_ERROR = 5
+
+
+def get_error_message(result_code):
+    error_messages = {
+        0: 'Success',
+        1: "Incorrect email or password",
+        2: "Account not set up properly",
+        3: "Cannot connect to IMAP server",
+        4: "Read Fail", # TODO: add meaningful message
+        5: "Database error" # TODO: add meaningful message
+    }
+    return error_messages.get(result_code, "Unknown error occurred")

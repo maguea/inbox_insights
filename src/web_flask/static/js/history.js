@@ -8,7 +8,7 @@
   const senderEl = document.getElementById('emailSender');
   const dateEl = document.getElementById('emailDate');
   const timeEl = document.getElementById('emailTime');
-  const bodyEl = document.getElementById('emailBody');
+  // const bodyEl = document.getElementById('emailBody').innerHTML = emailHtml;
   const placeholder = document.getElementById('panePlaceholder');
   const detailPane = document.getElementById('paneDetail');
 
@@ -19,6 +19,34 @@
   let filterText = '';
 
   // --- helpers
+  function renderEmailBody(emailHtml) {
+    const iframe = document.getElementById('emailBodyFrame');
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    // Optional: sanitize `emailHtml` before this step
+
+    doc.open();
+    doc.write(`
+        <html>
+          <head>
+            <base target="_blank">
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                margin: 0;
+                padding: 1rem;
+              }
+            </style>
+          </head>
+          <body>
+            ${emailHtml}
+          </body>
+        </html>
+    `);
+    doc.close();
+  }
+
+
   const setBusy = (busy) => {
     listEl.setAttribute('aria-busy', busy ? 'true' : 'false');
     sentinel.style.display = busy ? '' : 'none';
@@ -53,11 +81,14 @@
           senderEl.textContent = email.sender || '';
           dateEl.textContent = email.date || '';
           timeEl.textContent = email.timestamp || '';
-          bodyEl.innerHTML = email.body || `<p class="text-muted">(No body)</p>`;
+
+          // render body into the iframe
+          renderEmailBody(email.body || `<p class="text-muted">(No body)</p>`);
 
           placeholder.classList.add('d-none');
           detailPane.classList.remove('d-none');
           detailPane.focus();
+
         } catch (err) {
           console.error(err);
         }

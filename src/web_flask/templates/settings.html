@@ -45,17 +45,17 @@
 
 <div class="card">
     <div class="card-body">
-        <form id="emailForm" method="POST">
+        <form id="emailForm">
             <div class="mb-3">
-                <label for="username" class="form-label">Email Address</label>
+                <label for="user" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="username" name="username"
-                    placeholder="{% if user and user.username %}{{ user.username }}{% else %}mail@example.com{% endif %}"
-                    value="{% if user and user.username %}{{ user.username }}{% endif %}" required>
+                    placeholder="{% if user %}{{ user }}{% else %}mail@example.com{% endif %}"
+                    value="{% if user %}{{ user }}{% endif %}" required>
                 <div class="form-text">Your full email address</div>
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">
+                <label for="pass" class="form-label">
                     {% if user %}New Password{% else %}Password{% endif %}
                 </label>
                 <input type="password" class="form-control" id="password" name="password"
