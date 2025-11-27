@@ -1,15 +1,14 @@
 # tolu kolade
 from flask import request, session, abort, jsonify
+import json
+
 from . import api_bp
-
-from src.lib.email.email_actions import _email_login, _email_save_key
+from src.lib import EMAIL_CONST
+from src.lib.email.email_actions import _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
 from src.lib.account.user_categories import save_categories, load_categories
-from src.lib.account.user_accounts import _user_create_account
-from src.lib import EMAIL_CONST, get_error_message
 
-@api_bp.post('/check_email')
+@api_bp.get('/check_email')
 def check_email_account():
-
     username = session.get('email_user')
     server   = session.get('email_server')
 
@@ -47,24 +46,27 @@ def add_email():
 # List endpoint
 @api_bp.get('/emails')
 def list_emails():
+    username = session.get("email_user")
+    if not username:
+        abort(401)
 
-    return jsonify([{
-        "id": e["id"],
-        "sender": e["sender"],
-        "subject": e["subject"],
-        "preview": e["preview"],
-        "timestamp": e["timestamp"],
-        "date": e["date"]
-    } for e in emails])
+    # get the first page (or increase per_page if this is not used for infinite scroll)
+    page = request.args.get("page", default=1, type=int)
+    if page < 1:
+        page = 1
+    emails = _email_get_by_page(username, page)
+
+    return jsonify(emails)
 
 # Detail endpoint
 @api_bp.get('/emails/<int:eid>')
 def get_email(eid: int):
+    username = session.get("email_user")
+    email = _email_get_by_eid(username, eid)
 
-    for e in emails:
-        if e["id"] == eid:
-            return jsonify(e)
-    abort(404)
+    if not email:
+        abort(404)
+    return jsonify(email)
 
 @api_bp.get("/categories")
 def categories_list():

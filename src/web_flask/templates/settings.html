@@ -166,7 +166,7 @@
         const statusElement = document.getElementById('connectionStatus');
 
         fetch('{{ url_for("api.check_email_account") }}', {
-            method: 'POST'
+            method: 'GET'
         })
             .then(response => response.json())
             .then(data => {

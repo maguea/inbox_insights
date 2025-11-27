@@ -89,6 +89,40 @@ class DB_Actions:
         WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
         data = self.conn._get(query, credentials)
         return data[0][0]
+    
+    def _gather_email(self, uid, eid):
+        '''
+        get an email based on the email id. user id must match
+        
+        :param uid: user id, the email
+        :param eid: email id
+        '''
+        query = '''SELECT id, sender_add, category, data, collected_date, delete_date
+        FROM public.email_data
+        WHERE user_id = %s AND id = %s
+        LIMIT 1;'''
+        row = self.conn._get(query, (uid, eid,))
+
+        # If nothing found, return None
+        if not row or not row[0]:
+            return None
+        return row[0]
+    
+    def _gather_email_by_page(self, uid, limit, offset):
+        '''
+        Docstring for _gather_email_by_page
+        
+        :param uid: username
+        :param limit: how many emails to return
+        :param offset: where to start from
+        '''
+        query = '''SELECT id, sender_add, category, data, collected_date, delete_date FROM email_data
+        WHERE user_id = %s
+        ORDER BY collected_date DESC
+        LIMIT %s OFFSET %s'''
+        rows = self.conn._get(query, (uid, limit, offset,))
+        return rows
+
 
 # set
     def _add_email_data(self, data):

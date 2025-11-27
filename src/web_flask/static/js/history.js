@@ -8,7 +8,6 @@
   const senderEl = document.getElementById('emailSender');
   const dateEl = document.getElementById('emailDate');
   const timeEl = document.getElementById('emailTime');
-  // const bodyEl = document.getElementById('emailBody').innerHTML = emailHtml;
   const placeholder = document.getElementById('panePlaceholder');
   const detailPane = document.getElementById('paneDetail');
 
@@ -18,34 +17,45 @@
   let activeId = null;
   let filterText = '';
 
-  // --- helpers
   function renderEmailBody(emailHtml) {
     const iframe = document.getElementById('emailBodyFrame');
     const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-    // Optional: sanitize `emailHtml` before this step
-
     doc.open();
     doc.write(`
-        <html>
-          <head>
-            <base target="_blank">
-            <style>
-              body {
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                margin: 0;
-                padding: 1rem;
-              }
-            </style>
-          </head>
-          <body>
-            ${emailHtml}
-          </body>
-        </html>
+      <!doctype html>
+      <html>
+        <head>
+          <base target="_blank">
+          <style>
+            body {
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              margin: 0;
+              padding: 1rem;
+            }
+          </style>
+        </head>
+        <body>
+          ${emailHtml}
+        </body>
+      </html>
     `);
     doc.close();
   }
 
+  const escapeHtml = (value) => {
+    const str = String(value ?? '');
+    return str.replace(/[&<>"']/g, (c) => {
+      switch (c) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        case "'": return '&#39;';
+        default: return c;
+      }
+    });
+  };
 
   const setBusy = (busy) => {
     listEl.setAttribute('aria-busy', busy ? 'true' : 'false');
@@ -53,7 +63,6 @@
   };
 
   const nextPage = () => parseInt(listEl.dataset.nextPage || '1', 10);
-
   const bumpPage = () => {
     const p = nextPage();
     listEl.dataset.nextPage = (p + 1).toString();
@@ -67,28 +76,52 @@
         activeId = id;
 
         // highlight active
-        listEl.querySelectorAll('.email-item.active').forEach(el => el.classList.remove('active'));
+        listEl.querySelectorAll('.email-item.active')
+          .forEach(el => el.classList.remove('active'));
         btn.classList.add('active');
 
-        // fetch detail JSON
         try {
           const res = await fetch(`/api/emails/${id}`);
           if (!res.ok) throw new Error(`Failed detail ${res.status}`);
           const email = await res.json();
 
-          // fill pane
-          subjectEl.textContent = email.subject || '(no subject)';
-          senderEl.textContent = email.sender || '';
-          dateEl.textContent = email.date || '';
-          timeEl.textContent = email.timestamp || '';
+          // ----- map JSON shape -> UI fields -----
+          // sender object
+          const senderName = email.sender?.sender_name ?? '';
+          const senderAddr = email.sender?.sender_addr ?? '';
+          const senderDisplay = senderAddr
+            ? `${senderName || senderAddr} <${senderAddr}>`
+            : (senderName || '(unknown sender)');
 
-          // render body into the iframe
-          renderEmailBody(email.body || `<p class="text-muted">(No body)</p>`);
+          // subject / preview / html body are nested under data
+          const subject = email.data?.subject || email.subject || '(no subject)';
+          const bodyHtml = email.data?.data || '';      // HTML body
+          // const preview = email.data?.preview || email.preview || '';
+
+          // collected_date -> date + time
+          let dateText = email.collected_date || '';
+          let timeText = '';
+          if (email.collected_date) {
+            const d = new Date(email.collected_date);
+            if (!isNaN(d.getTime())) {
+              dateText = d.toLocaleDateString();
+              timeText = d.toLocaleTimeString();
+            }
+          }
+
+          // fill pane
+          subjectEl.textContent = subject;
+          senderEl.textContent = senderDisplay;
+          dateEl.textContent = dateText;
+          timeEl.textContent = timeText;
+
+          renderEmailBody(
+            bodyHtml || `<p class="text-muted">(No body)</p>`
+          );
 
           placeholder.classList.add('d-none');
           detailPane.classList.remove('d-none');
           detailPane.focus();
-
         } catch (err) {
           console.error(err);
         }
@@ -96,19 +129,40 @@
     });
   };
 
-  const appendItems = (html) => {
-    const frag = document.createElement('div');
-    frag.innerHTML = html;
 
-    // Move children BEFORE sentinel
-    const items = Array.from(frag.children);
-    items.forEach(ch => {
-      // simple client side filter on newly appended items
+  // Build and append list items from JSON
+  const appendItems = (emails) => {
+    if (!emails || emails.length === 0) return;
+
+    emails.forEach(email => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action email-item text-start';
+      btn.dataset.emailId = email.id;
+
+      // sender is an object
+      const senderName = email.sender?.sender_name
+        || email.sender?.sender_addr
+        || 'Unknown sender';
+
+      const timestamp = email.timestamp || ''; // may be empty if API doesn't send it
+
+      btn.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-1">
+          <span class="fw-semibold text-truncate">${escapeHtml(senderName)}</span>
+          <small class="text-muted">${escapeHtml(timestamp)}</small>
+        </div>
+        <div class="small text-muted text-truncate">${escapeHtml(email.subject || '')}</div>
+        <div class="small text-muted text-truncate">${escapeHtml(email.preview || '')}</div>
+      `;
+
+      // simple client-side filter on newly appended items
       if (filterText) {
-        const t = ch.innerText.toLowerCase();
+        const t = btn.innerText.toLowerCase();
         if (!t.includes(filterText)) return;
       }
-      listEl.insertBefore(ch, sentinel);
+
+      listEl.insertBefore(btn, sentinel);
     });
 
     attachItemHandlers(listEl);
@@ -120,17 +174,24 @@
     setBusy(true);
     try {
       const p = nextPage();
-      const res = await fetch(`/history/page/${p}`, { headers: { 'X-Requested-With': 'fetch' } });
-      if (res.status === 204) {
-        exhausted = true;
-        sentinel.innerHTML = '<span class="text-muted">No more emails.</span>';
+      const res = await fetch(`/api/emails?page=${p}`);
+      if (!res.ok) throw new Error(`Failed page ${p}: ${res.status}`);
+
+      const emails = await res.json();
+
+      if (!emails || emails.length === 0) {
+        if (p === 1) {
+          sentinel.innerHTML = '<span class="text-muted">No emails yet.</span>';
+        } else {
+          sentinel.innerHTML = '<span class="text-muted">No more emails.</span>';
+          exhausted = true;
+        }
         setBusy(false);
         loading = false;
         return;
       }
-      if (!res.ok) throw new Error(`Failed page ${p}: ${res.status}`);
-      const html = await res.text();
-      appendItems(html);
+
+      appendItems(emails);
       bumpPage();
     } catch (err) {
       console.error(err);
@@ -141,7 +202,6 @@
     }
   };
 
-  // IntersectionObserver for infinite scroll
   const setupObserver = () => {
     if (!('IntersectionObserver' in window)) return;
 
@@ -154,10 +214,8 @@
     observer.observe(sentinel);
   };
 
-  // Fallback button
   loadMoreBtn.addEventListener('click', loadPage);
 
-  // Simple client-side filter of rendered items
   const debounce = (fn, ms) => {
     let t = 0;
     return (...args) => {
@@ -180,7 +238,6 @@
     applyFilter();
   }, 150));
 
-  // initial boot
   document.addEventListener('DOMContentLoaded', () => {
     setupObserver();
     loadPage(); // fetch first page immediately
