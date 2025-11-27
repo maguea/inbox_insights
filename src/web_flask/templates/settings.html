@@ -14,7 +14,6 @@
     </p>
 </div>
 
-<!-- Current Connection Status (only show if user exists) -->
 {% if user %}
 <div class="alert alert-warning alert-dismissible fade show" role="alert">
     <strong>Current Status:</strong>
@@ -25,7 +24,6 @@
 </div>
 {% endif %}
 
-<!-- Success/Error Alerts from Form Submission -->
 <div id="successAlert" class="alert alert-success alert-dismissible fade show d-none" role="alert">
     <strong>Success!</strong>
     <span id="successMessage">
@@ -45,44 +43,50 @@
 
 <div class="card">
     <div class="card-body">
-        <form id="emailForm" method="POST">
+        <form id="emailForm">
             <div class="mb-3">
-                <label for="username" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="username" name="username"
-                    placeholder="{% if user and user.username %}{{ user.username }}{% else %}mail@example.com{% endif %}"
-                    value="{% if user and user.username %}{{ user.username }}{% endif %}" required>
+                <label for="user" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="user" name="user"
+                    placeholder="{% if user %}{{ user }}{% else %}mail@example.com{% endif %}"
+                    value="{% if user %}{{ user }}{% endif %}" required>
                 <div class="form-text">Your full email address</div>
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">
-                    {% if user %}New Password{% else %}Password{% endif %}
+                <label for="key" class="form-label">
+                    App Password / Key
                 </label>
-                <input type="password" class="form-control" id="password" name="password"
-                    placeholder="{% if user %}Enter new password to update{% else %}Your email password{% endif %}" {%
-                    if not user %}required{% endif %}>
+                <input type="password" class="form-control" id="key" name="key"
+                    placeholder="Your email app password or API key" required>
                 <div class="form-text">
-                    {% if user %}
-                    Enter your current or new password to update credentials
-                    {% else %}
-                    Your email account password or app password
-                    {% endif %}
+                    Use your email provider's app password or generated key (not your normal login password).
                 </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">IMAP Server</label>
                 <div class="btn-group" role="group" aria-label="IMAP Server selection">
-                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {% if not user
-                        or not user.server or user.server=='imap.gmail.com' %}checked{% endif %}>
+                    {# derive domain from the email string if present #}
+                    {% if user %}
+                    {% set domain = user.split('@')[-1] %}
+                    {% else %}
+                    {% set domain = '' %}
+                    {% endif %}
+
+                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {# default to
+                        Gmail if no user yet or if email looks like a Gmail address #} {% if not user or 'gmail.com' in
+                        domain %} checked {% endif %}>
                     <label class="btn btn-outline-primary" for="gmail">Gmail</label>
 
-                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {% if
-                        user and user.server=='outlook.office365.com' %}checked{% endif %}>
+                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {#
+                        default to Outlook if email domain looks like an Outlook/Microsoft one #} {% if 'outlook.com' in
+                        domain or 'hotmail.com' in domain or 'live.com' in domain or 'office365.com' in domain %}
+                        checked {% endif %}>
                     <label class="btn btn-outline-primary" for="outlook">Outlook</label>
                 </div>
                 <div class="form-text mt-2">Select your email provider</div>
             </div>
+
 
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                 <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -97,21 +101,16 @@
     </div>
 </div>
 
-<!-- Help Section -->
 <div class="card mt-4">
     <div class="card-header">
         <h5 class="mb-0">Connection Help</h5>
     </div>
     <div class="card-body">
-        <!-- <h6>Common IMAP Servers:</h6>
-        <ul class="mb-3">
-            <li><strong>Gmail:</strong> imap.gmail.com (requires App Password)</li>
-            <li><strong>Outlook/Office365:</strong> outlook.office365.com</li>
-        </ul> -->
-
         <h6>App Passwords:</h6>
-        <p class="mb-0">For Gmail and other services, you may need to generate an App Password instead of using your
-            regular password.</p>
+        <p class="mb-0">
+            For Gmail and other services, you may need to generate an App Password instead of using your regular
+            password.
+        </p>
     </div>
 </div>
 
@@ -122,11 +121,9 @@
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerHTML;
 
-        // Hide any existing alerts
         document.getElementById('successAlert').classList.add('d-none');
         document.getElementById('errorAlert').classList.add('d-none');
 
-        // Show loading
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Testing Connection...';
         submitBtn.disabled = true;
 
@@ -140,18 +137,17 @@
 
             const result = await response.json();
 
-            if (response.ok) {
-                // Show success message
-                document.getElementById('successMessage').textContent = result.msg || 'Email settings saved successfully!';
+            if (response.ok && result.ok) {
+                document.getElementById('successMessage').textContent =
+                    result.msg || 'Email settings saved successfully!';
                 document.getElementById('successAlert').classList.remove('d-none');
 
-                // Update connection status after successful save
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
             } else {
-                // Show error message
-                document.getElementById('errorMessage').textContent = result.msg || 'An error occurred while saving settings';
+                document.getElementById('errorMessage').textContent =
+                    result.msg || 'An error occurred while saving settings';
                 document.getElementById('errorAlert').classList.remove('d-none');
             }
 
@@ -165,28 +161,26 @@
         }
     });
 
-    // Check current email status on page load
     document.addEventListener('DOMContentLoaded', function () {
-        // If we have user, try to fetch current status
         {% if user %}
         const statusElement = document.getElementById('connectionStatus');
 
-        fetch('{{ url_for("api.check_email_account") }}')
+        fetch('{{ url_for("api.check_email_account") }}', {
+            method: 'GET'
+        })
             .then(response => response.json())
             .then(data => {
-                // Update the UI with the current status
                 console.log('Current email status:', data);
 
-                // Remove loading spinner and show status message
-                statusElement.innerHTML = data.msg || 'Connection status unknown';
-
-                // Update alert style based on success/error
                 const alertElement = statusElement.closest('.alert');
-                if (data.msg && data.msg.toLowerCase().includes('success') || data.msg && data.msg.toLowerCase().includes('ok')) {
-                    alertElement.classList.remove('alert-warning');
+
+                if (data.ok) {
+                    statusElement.innerHTML = data.msg || 'Connected';
+                    alertElement.classList.remove('alert-warning', 'alert-danger');
                     alertElement.classList.add('alert-success');
-                } else if (data.msg && data.msg.toLowerCase().includes('error') || data.msg && data.msg.toLowerCase().includes('fail')) {
-                    alertElement.classList.remove('alert-warning');
+                } else {
+                    statusElement.innerHTML = data.msg || 'Not connected';
+                    alertElement.classList.remove('alert-warning', 'alert-success');
                     alertElement.classList.add('alert-danger');
                 }
             })
@@ -194,7 +188,7 @@
                 console.error('Error checking email status:', error);
                 statusElement.innerHTML = 'Error checking connection status';
                 const alertElement = statusElement.closest('.alert');
-                alertElement.classList.remove('alert-warning');
+                alertElement.classList.remove('alert-warning', 'alert-success');
                 alertElement.classList.add('alert-danger');
             });
         {% endif %}

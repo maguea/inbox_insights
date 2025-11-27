@@ -1,67 +1,78 @@
 # tolu kolade
-from flask import Blueprint, request, abort, jsonify
-import os, json
+from flask import request, session, abort, jsonify
+import json
 
-from src.lib.account.create_accounts import _create_account, _login, _check_env
-from src.lib.account.categories import save_categories, load_categories
-from src.web_flask.web_extras.testing_extra import SAMPLE_EMAILS
-from src.web_flask.web_extras.web_functions_temp import get_error_message, get_current_user
+from . import api_bp
+from src.lib import EMAIL_CONST
+from src.lib.email.email_actions import _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
+from src.lib.account.user_categories import save_categories, load_categories
 
-api_bp = Blueprint('api', __name__, url_prefix='/api')
-
-@api_bp.get('/valid_email')
+@api_bp.get('/check_email')
 def check_email_account():
-    user = get_current_user()
-    result = _login(user=user['username'],password=user['password'])
-    
-    return jsonify({'msg': get_error_message(result)})
+    username = session.get('email_user')
+    server   = session.get('email_server')
+
+    if not username or not server:
+        return jsonify({'ok': False, 'msg': 'No email credentials in session'}), 400
+
+    result = _email_login(username, server)
+    if result == EMAIL_CONST.LOGIN_SUCCESS:
+        return jsonify({'ok': True})
+    else:
+        return jsonify({'ok': False})
 
 @api_bp.post('/register')
 def add_email():
 # Get form data
-    username = request.form.get('username')
-    password = request.form.get('password')
+    username = request.form.get('user')
+    key = request.form.get('key')
     server = request.form.get('server')
-    _create_account(username, password, server)
-    result = _login(username, password)
+    print(username + ", " + key + ", " + server)
 
-    return jsonify({'msg': get_error_message(result)})
+    result = _email_login(user=username, key=key, server=server)
+    if result == EMAIL_CONST.IMAP_CONN_FAIL:
+        print("STATUS: failed to check IMAP to add_email()")
+        return jsonify({'ok': False})
+    
+    # _user_create_account(username, "") # TODO: remove later. user creation should be done elsewhere
+    _email_save_key(username, key)
+
+    # save to session
+    session['email_user'] = username
+    session['email_server'] = server
+
+    return jsonify({'ok': True})
 
 # List endpoint
 @api_bp.get('/emails')
 def list_emails():
-    if os.path.exists('cached_emails.json'):
-        with open('cached_emails.json', 'r') as f:
-            emails = json.load(f)
-    else:
-        emails = SAMPLE_EMAILS
-    return jsonify([{
-        "id": e["id"],
-        "sender": e["sender"],
-        "subject": e["subject"],
-        "preview": e["preview"],
-        "timestamp": e["timestamp"],
-        "date": e["date"]
-    } for e in emails])
+    username = session.get("email_user")
+    if not username:
+        abort(401)
+
+    # get the first page (or increase per_page if this is not used for infinite scroll)
+    page = request.args.get("page", default=1, type=int)
+    if page < 1:
+        page = 1
+    emails = _email_get_by_page(username, page)
+
+    return jsonify(emails)
 
 # Detail endpoint
 @api_bp.get('/emails/<int:eid>')
 def get_email(eid: int):
-    if os.path.exists('cached_emails.json'):
-        with open('cached_emails.json', 'r') as f:
-            emails = json.load(f)
-    else:
-        emails = SAMPLE_EMAILS
+    username = session.get("email_user")
+    email = _email_get_by_eid(username, eid)
 
-    for e in emails:
-        if e["id"] == eid:
-            return jsonify(e)
-    abort(404)
+    if not email:
+        abort(404)
+    return jsonify(email)
 
 @api_bp.get("/categories")
 def categories_list():
     """Return all categories from .env as JSON."""
-    return jsonify(load_categories())
+    username = session.get('email_user')
+    return jsonify(load_categories(user=username))
 
 @api_bp.post("/categories")
 def categories_upsert():
