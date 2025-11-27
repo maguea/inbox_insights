@@ -17,9 +17,9 @@ def save_categories(categories: list[dict]):
     # TODO: implement
     set_key(str(ENV_PATH), ENV_KEY, json.dumps(categories))
 
-def load_categories(user, password):
+def load_categories(user, password=None):
     """
     Load categories list from server.
     """
     db = DB_Actions()
-    return db._gather_categories(user, password)
+    return db._gather_categories((user, password,))

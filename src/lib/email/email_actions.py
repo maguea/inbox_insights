@@ -26,5 +26,10 @@ def _email_login(user, server, key=None):
     return EMAIL_CONST.LOGIN_SUCCESS
 
 def _email_save_key(user, key):
+    '''
+    saves or updates the key for the user
+    
+    :param key: key to be saved
+    '''
     db = DB_Actions()
     return db._add_email_key((user, ""), key) #TODO: update logic for additional emails

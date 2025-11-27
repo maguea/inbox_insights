@@ -1,10 +1,10 @@
 # Matt 4:4 - Modified to return formatted email list
 
-import imaplib, email
-import json
+import imaplib, email, json
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
+
 from src.lib import EMAIL_CONST
 
 class Gather:
@@ -48,19 +48,23 @@ class Gather:
 
     def _get_sender(self, msg):
         '''
-        Returns full sender string: "Name <email@example.com>" or just "email@example.com"
+        Returns sender info as a dict:
+        {
+            "name": "John Doe",
+            "address": "john@acme.com"
+        }
+        If parsing fails, fields may be empty strings.
         '''
-        from_header = msg.get('From', '')
+        from_header = msg.get('From', '') or ''
         name, addr = parseaddr(from_header)
-        name = self._decode_header_value(name)
-        
-        if name and addr:
-            return f"{name} <{addr}>"
-        elif addr:
-            return addr
-        elif name:
-            return name
-        return 'unknown'
+
+        name = self._decode_header_value(name) if name else ''
+        addr = addr or ''
+
+        return {
+            "name": name,
+            "address": addr
+        }
 
     def _get_subject(self, msg):
         '''
@@ -191,14 +195,15 @@ class Gather:
         Fetch unread emails and return as a list in the format:
         [
             {
-                "id": 101,
-                "sender": "John Doe <john@acme.com>",
+                "sender": {
+                    "name": "John Doe",
+                    "address": "john@acme.com"
+                },
                 "subject": "Q4 Launch Plan",
                 "preview": "Here's the quick summary...",
                 "timestamp": "2:30 PM",
                 "date": "Oct 1, 2025",
                 "body": "<p><b>Hi team,</b></p>...",
-                "attachments": ["Q4-launch-plan.pdf"]
             }
         ]
         '''
@@ -210,63 +215,60 @@ class Gather:
             print(f"Search status: {status}, found: {data}")
             if status != 'OK':
                 return []
-
+    
             ids = data[0].split()
             print(f"Found {len(ids)} unread email IDs")
             if not ids:
                 return []
-
+    
             result = []
-            email_id_counter = 1
             
             for eid in ids:
-                print(f"Fetching email {email_id_counter}...")
+                print(f"Fetching email {eid}...")
                 status, msg_data = self.conn.fetch(eid, '(RFC822)')
                 print(f"Fetch status: {status}")
                 if status != 'OK' or not msg_data or not isinstance(msg_data[0], tuple):
                     print(f"Skipping email {eid}")
                     continue
-
+                
                 raw_msg = msg_data[0][1]
                 msg = email.message_from_bytes(raw_msg)
                 print(f"Parsing email from: {msg.get('From', 'unknown')}")
-
+    
                 # Extract all fields
-                sender = self._get_sender(msg)
+                sender = self._get_sender(msg)  # now a dict
                 subject = self._get_subject(msg)
                 print(f"  Subject: {subject}")
                 timestamp, date_str = self._get_date_info(msg)
                 body = self._get_html_body(msg)
                 print(f"  Body length: {len(body)}")
-                attachments = self._get_attachments(msg)
                 preview = self._create_preview(body)
-
-                # Build email object
+    
+                # Build email object (with structured sender)
                 email_obj = {
-                    "id": email_id_counter,
                     "sender": sender,
                     "subject": subject,
                     "preview": preview,
                     "timestamp": timestamp,
                     "date": date_str,
                     "body": body,
-                    "attachments": attachments
                 }
                 
                 result.append(email_obj)
-                email_id_counter += 1
-                print(f"  ✅ Email {email_id_counter - 1} processed")
-
+                print(f"  ✅ Email from {sender.get('address') or sender.get('name') or 'unknown'} processed")
+    
                 # Mark as read (uncomment to enable)
                 # self.conn.store(eid, '+FLAGS', r'(\Seen)')
-
+    
             print(f"Total emails fetched: {len(result)}")
             return result
-
+    
         finally:
             print("Disconnecting...")
             self._disconnect()
             print("Disconnected")
+
+
 
 
 # Example usage

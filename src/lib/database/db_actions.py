@@ -1,13 +1,14 @@
-from src.lib import EMAIL_CONST, DB_CONST
-from src.lib.database.db_conn import DB_Connection
-
+import json
 from datetime import datetime as dt
 from datetime import timezone as tz
+
+from src.lib import EMAIL_CONST, DB_CONST
+from src.lib.database.db_conn import DB_Connection
 
 class DB_Actions:
     conn = DB_Connection()
 
-    # login 
+# login 
     def _check_pass(self, user_id, password):
         '''
         Check if user is in the database. return missing account, success, or incorrect account info
@@ -27,12 +28,11 @@ class DB_Actions:
         '''
         add a new credential to the db
         '''
-        query = '''INSERT INTO public.user_data (user_id, user_pass)
-        VALUES (%s, %s)''' # TODO: hashing?
-        return self.conn._set(query, (user_id, password,))
-        
+        query = '''INSERT INTO public.user_data (user_id, user_pass, priv_cats)
+        VALUES (%s, %s, %s)''' # TODO: hashing?
+        return self.conn._set(query, (user_id, password, "{}",))
     
-    # get
+# get
     def _gather_data_by_user(self, user_id):
         '''
         This functions uses SQL to gather all emails by user_id.
@@ -72,7 +72,16 @@ class DB_Actions:
         query = '''SELECT priv_cats FROM public.user_data
         WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
         data = self.conn._get(query, credentials)
-        return data
+        if not data:
+            return []
+        try:
+            print("DEBUG: ")
+            print(data[0][0])
+            categories = json.loads(data[0][0])
+        except json.JSONDecodeError:
+            print("ERROR: failed to parse categories JSON: " + data)
+            categories = None
+        return categories
     
     def _gather_user_key(self, credentials) -> str:
 
@@ -81,14 +90,14 @@ class DB_Actions:
         data = self.conn._get(query, credentials)
         return data[0][0]
 
-    # set
+# set
     def _add_email_data(self, data):
         '''
         The param data should ideally be a single tuple or 1D array
         '''
         # Maybe format into tuple before
-        query = '''INSERT INTO public.email_data (user_id, sender_id, category, data, delete_date) 
-        VALUES (%s, %s, %s, %s, %s)'''
+        query = '''INSERT INTO public.email_data (user_id, sender_add, category, data, delete_date) 
+        VALUES (%s, %s::jsonb, %s, %s::jsonb, %s)'''
         result = self.conn._set(query=query, args=data)
         
         if result == DB_CONST.DB_ERROR:
@@ -118,7 +127,7 @@ class DB_Actions:
         data = self.conn._set(query, credentials + (key,)) # TODO: alex, can you check this logic?
         return data
 
-    #actions
+#actions
     def _delete_old_emails(self):
         now = dt.now(tz.utc)
         query = 'DELETE FROM public.email_data WHERE delete_date < %s'

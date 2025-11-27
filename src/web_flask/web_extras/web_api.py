@@ -28,9 +28,9 @@ def add_email():
     username = request.form.get('user')
     key = request.form.get('key')
     server = request.form.get('server')
-    print(username + " " + key + " " + server)
+    print(username + ", " + key + ", " + server)
 
-    result = _email_login(username, key, server)
+    result = _email_login(user=username, key=key, server=server)
     if result == EMAIL_CONST.IMAP_CONN_FAIL:
         print("STATUS: failed to check IMAP to add_email()")
         return jsonify({'ok': False})
@@ -69,7 +69,8 @@ def get_email(eid: int):
 @api_bp.get("/categories")
 def categories_list():
     """Return all categories from .env as JSON."""
-    return jsonify(load_categories())
+    username = session.get('email_user')
+    return jsonify(load_categories(user=username))
 
 @api_bp.post("/categories")
 def categories_upsert():

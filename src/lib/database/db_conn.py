@@ -1,5 +1,6 @@
 # Matt 4:4
 import psycopg2 as pg
+import traceback
 from src.lib import DB_CONST
 
 
@@ -52,8 +53,13 @@ class DB_Connection:
         try:
             cur.execute(query, args)
             self.conn.commit()
-        except:
-            print('DB Commit Error')
+        except Exception as e:
+            self.conn.rollback()
+            self.last_error = e
+            print("DB ERROR while executing:", query)
+            print("ARGS:", args)
+            print("Exception:", repr(e))
+            traceback.print_exc()
             return DB_CONST.DB_ERROR
         
     def _get(self, query, args):
