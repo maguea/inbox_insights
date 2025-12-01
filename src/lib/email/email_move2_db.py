@@ -33,6 +33,7 @@ def _email_move_to_database(user, server, key=None):
     emails = gather._fetch_unread_and_mark_seen()
 
     now = dt.now(tz.utc)
+    db._delete_old_emails()
 
     for email_obj in emails:
         sender_info = email_obj.get("sender", {}) or {}
@@ -40,23 +41,8 @@ def _email_move_to_database(user, server, key=None):
         sender_name = (sender_info.get("name") or "").strip()
 
         # Default category/delete_date
-        category_name = None
+        category_name = db._get_cat_by_sender(sender_addr)
         delete_date = None
-
-                # Find matching category based on sender email
-        if sender_addr and categories:
-            for cat in categories:
-                cat_emails = [e.lower() for e in cat.get("emails", [])]
-                if sender_addr.lower() in cat_emails:
-                    category_name = cat.get("name")
-
-                    # Get days_until_delete, default to 30 if missing/invalid
-                    days_until_delete = cat.get("days_until_delete", DEFAULT_DAYS_UNTIL_DELETE)
-                    if not isinstance(days_until_delete, int) or days_until_delete < 0:
-                        days_until_delete = DEFAULT_DAYS_UNTIL_DELETE
-
-                    delete_date = now + timedelta(days=days_until_delete)
-                    break
 
         # If no category matched, still default to 30 days
         if delete_date is None:
@@ -84,7 +70,4 @@ def _email_move_to_database(user, server, key=None):
             data_json,          # data (text/JSON)
             delete_date,         # delete_date (timestamp or None)
         )
-        print("####################################")
-        print(row)
-        print("####################################")
         db._add_email_data(row)

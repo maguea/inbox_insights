@@ -249,7 +249,10 @@ class Gather:
                 print(f"  Body length: {len(body)}")
                 preview = self._create_preview(body)
                 category = self._get_category(sender)
-    
+
+                if category:
+                    self.conn.uid('STORE', eid, '+FLAGS', '\\Deleted')
+
                 # Build email object (with structured sender)
                 email_obj = {
                     "sender": sender,
@@ -268,6 +271,7 @@ class Gather:
                 # self.conn.store(eid, '+FLAGS', r'(\Seen)')
     
             print(f"Total emails fetched: {len(result)}")
+            self.conn.expunge() # Saves deletion
             return result
     
         finally:
