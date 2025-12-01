@@ -4,6 +4,7 @@ from src.lib import EMAIL_CONST
 from src.lib.database.db_actions import DB_Actions
 from src.lib.email.email_scraper import Gather
 
+
 def _email_login(user, server, key=None):
     '''
     Checks basic connection.
@@ -12,8 +13,8 @@ def _email_login(user, server, key=None):
         - 3: IMAP server connection failed
     '''
     db = DB_Actions()
-    if key == None:
-        key = db._gather_user_key((user, "",)) #TODO: update logic for additional emails
+    if key is None:
+        key = db._gather_user_key((user, "",))  # TODO: update logic for additional emails
         print("STATUS: getting key from db..." + key)
     user_connection_check = Gather(user, key, server)
 
@@ -21,11 +22,12 @@ def _email_login(user, server, key=None):
         user_connection_check._connect()
         # Disconnects for security
         user_connection_check._disconnect()
-    except:
+    except Exception:
         print("ERROR: couldnt connect to imap..")
         return EMAIL_CONST.IMAP_CONN_FAIL
-    
+
     return EMAIL_CONST.LOGIN_SUCCESS
+
 
 def _email_save_key(user, key):
     '''
@@ -34,7 +36,8 @@ def _email_save_key(user, key):
     :param key: key to be saved
     '''
     db = DB_Actions()
-    return db._add_email_key((user, ""), key) #TODO: update logic for additional emails
+    return db._add_email_key((user, ""), key)  # TODO: update logic for additional emails
+
 
 def _email_get_by_eid(user, email_id):
     db = DB_Actions()
@@ -51,12 +54,13 @@ def _email_get_by_eid(user, email_id):
 
     return {
         "id": id_,
-        "sender": sender_json,       # dict
-        "category": category,        # string or None
-        "data": data_json,           # dict: {subject, preview, data}
+        "sender": sender_json,        # dict
+        "category": category,         # string or None
+        "data": data_json,            # dict: {subject, preview, data}
         "collected_date": collected_date,
         "delete_date": delete_date
     }
+
 
 def _email_get_by_page(user, page, cat, per_page=50):
     """
@@ -65,20 +69,43 @@ def _email_get_by_page(user, page, cat, per_page=50):
     """
     offset = (page - 1) * per_page
     db = DB_Actions()
+
     if not cat:
         rows = db._gather_email_by_page(uid=user, limit=per_page, offset=offset)
     else:
         rows = db._gather_data_by_category(user_id=user, category=cat, limit=per_page, offset=offset)
 
-    # Turn rows into simple dicts if `rows` are tuples/records
     emails = []
     for r in rows:
+        # r layout (from db_actions):
+        # 0: id
+        # 1: sender_add  (jsonb)
+        # 2: category
+        # 3: data        (jsonb: subject/preview/body)
+        # 4: collected_date
+        # 5: delete_date
+        sender_val = r[1]
+        data_val = r[3]
+
+        if isinstance(sender_val, str):
+            try:
+                sender_val = json.loads(sender_val)
+            except json.JSONDecodeError:
+                sender_val = {}
+
+        if isinstance(data_val, str):
+            try:
+                data_val = json.loads(data_val)
+            except json.JSONDecodeError:
+                data_val = {}
+
         email = {
             "id": r[0],
-            "sender": r[1], # has sender_addr and sender_name
-            "subject": r[3]["subject"],
-            "preview": r[3]["preview"]
+            "sender": sender_val,                         # dict with sender_name/sender_addr
+            "category": r[2],
+            "subject": data_val.get("subject", ""),
+            "preview": data_val.get("preview", ""),
         }
-        # print(email)
         emails.append(email)
+
     return emails
