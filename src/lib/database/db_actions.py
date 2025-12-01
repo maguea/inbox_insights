@@ -104,7 +104,7 @@ class DB_Actions:
             return None
         return row[0]
     
-    def _gather_email_by_page(self, uid, limit, offset):
+    def _gather_email_by_page(self, uid, category, limit, offset):
         '''
         Docstring for _gather_email_by_page
         

@@ -58,14 +58,14 @@ def _email_get_by_eid(user, email_id):
         "delete_date": delete_date
     }
 
-def _email_get_by_page(user, page, per_page=50):
+def _email_get_by_page(user, page, cat, per_page=50):
     """
     Returns a list of email dicts for a given user, ordered from newest to oldest,
     using LIMIT/OFFSET.
     """
     offset = (page - 1) * per_page
     db = DB_Actions()
-    rows = db._gather_email_by_page(uid=user, limit=per_page, offset=offset)
+    rows = db._gather_email_by_page(uid=user,category=cat, limit=per_page, offset=offset)
 
     # Turn rows into simple dicts if `rows` are tuples/records
     emails = []

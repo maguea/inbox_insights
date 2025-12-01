@@ -72,11 +72,13 @@ def list_emails():
     if not username:
         abort(401)
 
+    category = request.args.get('cat', 'Guest')
+
     # get the first page (or increase per_page if this is not used for infinite scroll)
     page = request.args.get("page", default=1, type=int)
     if page < 1:
         page = 1
-    emails = _email_get_by_page(username, page)
+    emails = _email_get_by_page(username, page, cat)
 
     return jsonify(emails)
 
