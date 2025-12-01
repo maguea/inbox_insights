@@ -42,6 +42,9 @@ class DB_Connection:
             print('Database connection error.')
         return self.conn
     
+    def _reconnect_to_db(self):
+        self.conn.con
+    
     def _set(self, query, args):
         '''
         Make a change to the database. will return DB_CONST.DB_ERROR if error
@@ -51,6 +54,12 @@ class DB_Connection:
         '''
         cur = self.conn.cursor()
         try:
+            cur.execute(query, args)
+            self.conn.commit()
+        except pg.InterfaceError or pg.OperationalError: # reconnect and try execution again
+            print("ERROR: lost connection to db. attempting reconnecting and execute")
+            self._init_conn()
+            cur = self.conn.cursor()
             cur.execute(query, args)
             self.conn.commit()
         except Exception as e:
@@ -69,13 +78,26 @@ class DB_Connection:
         :param query: the query prompt
         :param args: the arguments for the query in a tuple
         '''
-        cur = self.conn.cursor()
         try:
+            cur = self.conn.cursor()
             cur.execute(query, args)
             data = cur.fetchall()
+            self.conn.commit()
             return data
-        except:
-            print('ERROR: DB Fetch Error _get()')
+        except pg.InterfaceError or pg.OperationalError: # reconnect and try execution again
+            print("ERROR: lost connection to db. attempting reconnecting and request")
+            self._init_conn()
+            cur = self.conn.cursor()
+            cur.execute(query, args)
+            data = cur.fetchall()
+            self.conn.commit()
+            return data
+        except Exception as e:
+            self.last_error = e
+            print("DB ERROR while fetching:", query)
+            print("ARGS:", args)
+            print("Exception:", repr(e))
+            traceback.print_exc()
             return DB_CONST.DB_ERROR
     
 

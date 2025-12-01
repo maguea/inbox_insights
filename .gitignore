@@ -19,6 +19,7 @@ venv/
 *~
 .DS_Store
 !/.vscode/launch.json
+!/.vscode/tasks.json
 
 # Logs and temporary files
 *.log

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime as dt
 from datetime import timezone as tz
 
@@ -9,20 +8,17 @@ class DB_Actions:
     conn = DB_Connection()
 
 # login 
-    def _check_pass(self, user_id, password):
+    def _get_pass(self, user_id):
         '''
-        Check if user is in the database. return missing account, success, or incorrect account info
+        gets password for user
         '''
         query = 'SELECT user_pass FROM public.user_data WHERE user_id = %s'
-        check = self.conn._get(query=query, args=(user_id,))
-        print(check)
-
-        if check is None:
-            return EMAIL_CONST.MISSING_ACCOUNT
-        elif check == password:
-            return EMAIL_CONST.LOGIN_SUCCESS
-        else:
-            return EMAIL_CONST.INCORRECT_ACCOUNT_INFO
+        password = self.conn._get(query=query, args=(user_id,))
+        # print(password)
+        try:
+            return password[0][0]
+        except:
+            return None
         
     def _add_new_user(self, user_id, password):
         '''
@@ -73,13 +69,13 @@ class DB_Actions:
         WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
         data = self.conn._get(query, credentials)
         if not data:
+            print("STATUS: empty category")
+            print(data)
             return []
         try:
-            print("DEBUG: ")
-            print(data[0][0])
-            categories = json.loads(data[0][0])
-        except json.JSONDecodeError:
-            print("ERROR: failed to parse categories JSON: " + data)
+            categories = data[0][0]
+        except:
+            print("ERROR: category failed to be retrieved")
             categories = None
         return categories
     
@@ -144,7 +140,7 @@ class DB_Actions:
         :param credentials: tuple of username, password
         '''
         query = '''INSERT INTO public.user_data (user_id, user_pass, priv_cats)
-        VALUES (%s, %s, %s)
+        VALUES (%s, %s, %s::jsonb)
         ON CONFLICT (user_id) DO UPDATE SET priv_cats = EXCLUDED.priv_cats''' # TODO: hashing?
         data = self.conn._set(query, credentials + (cats,)) # TODO: alex, can you check this logic?
         return data
@@ -172,3 +168,20 @@ class DB_Actions:
 
         if result == DB_CONST.DB_ERROR:
             print('Email delete error')
+
+    def _apply_categories(self, user, category_name, email_patterns):
+        '''
+        apply the email patterns to user's email with the category name
+        '''
+        query = """UPDATE public.email_data e
+            SET category = %s
+            WHERE e.user_id = %s
+              AND EXISTS (
+                SELECT 1
+                FROM unnest(%s::text[]) AS patt(p)
+                WHERE e.sender_add->>'sender_addr' ILIKE patt.p
+              )"""
+        result = self.conn._set(query, (category_name, user, email_patterns))
+        if result == DB_CONST.DB_ERROR:
+            print('Email delete error')
+

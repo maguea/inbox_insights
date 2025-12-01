@@ -1,9 +1,8 @@
 # tolu kolade
-from flask import Flask, session, render_template
+from flask import Flask, redirect, session, render_template, url_for
 import os, secrets
 from dotenv import load_dotenv, set_key
 
-from src.lib.email.email_move2_db import _email_move_to_database
 from src.web_flask.web_extras import api_bp, bp_login
 from src.lib import EMAIL_CONST
 
@@ -25,15 +24,23 @@ app.register_blueprint(bp_login)
 def index():
     username = session.get('email_user')
     server   = session.get('email_server')
-
-    _email_move_to_database(user=username, server=server)
+    if not username and not server:
+        return redirect(url_for('client_login'))
     return render_template('dashboard.html')
 
 @app.route('/config')
 def client_settings():
-    user = EMAIL_CONST.GMAIL['user']
+    user = session.get('email_user')
     return render_template('settings.html', user=user)
+
+@app.route('/login')
+def client_login():
+    return render_template('login_page.html')
 
 @app.route('/history')
 def view_all_emails():
     return render_template('history.html')
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True

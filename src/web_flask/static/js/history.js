@@ -23,7 +23,7 @@
 
     doc.open();
     doc.write(`
-      <!doctype html>
+      <!DOCTYPE html>
       <html>
         <head>
           <base target="_blank">

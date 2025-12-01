@@ -12,12 +12,18 @@ def _user_create_account(user, password):
         db._add_new_user(user_id=user, password=password)
     
 
-def _login(user, password):
+def _user_login(user, password):
     '''
-    Checks basic connection.
-        Returns: 
-        - 0: Success 
-        - 3: IMAP server connection failed
+    checks if valid account for user and password. returns if exist, does not exist, or incorrect info
     '''
     db = DB_Actions()
-    return db._check_pass((user, password))
+    check = db._get_pass(user)
+    print(check)
+
+    if check is None:
+        return EMAIL_CONST.MISSING_ACCOUNT
+    elif check == password:
+        return EMAIL_CONST.LOGIN_SUCCESS
+    else:
+        return EMAIL_CONST.INCORRECT_ACCOUNT_INFO
+                                       
