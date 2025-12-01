@@ -5,6 +5,7 @@ from dotenv import load_dotenv, set_key
 
 from src.web_flask.web_extras import api_bp, bp_login
 from src.lib import EMAIL_CONST
+from src.lib.email.email_actions import _email_get_dashboard
 
 app = Flask(__name__)
 
@@ -20,26 +21,52 @@ app.secret_key = secret_key
 app.register_blueprint(api_bp)
 app.register_blueprint(bp_login)
 
+
 @app.route('/')
 def index():
     username = session.get('email_user')
     server   = session.get('email_server')
-    if not username and not server:
+    if not username or not server:
         return redirect(url_for('client_login'))
-    return render_template('dashboard.html')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/dashboard')
+def dashboard():
+    """
+    Render the dashboard with category-grouped email previews.
+    """
+    username = session.get('email_user')
+    server   = session.get('email_server')
+
+    if not username or not server:
+        return redirect(url_for('client_login'))
+
+    # Fetch 3 newest emails per category
+    sections = _email_get_dashboard(username, per_category=3)
+
+    return render_template(
+        'dashboard.html',
+        sections=sections,
+        user=username
+    )
+
 
 @app.route('/config')
 def client_settings():
     user = session.get('email_user')
     return render_template('settings.html', user=user)
 
+
 @app.route('/login')
 def client_login():
     return render_template('login_page.html')
 
+
 @app.route('/history')
 def view_all_emails():
     return render_template('history.html')
+
 
 @app.before_request
 def make_session_permanent():

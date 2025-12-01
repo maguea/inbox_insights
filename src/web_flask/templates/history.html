@@ -19,12 +19,13 @@
                             <i class="fas fa-search text-muted"></i>
                         </span>
                         <input id="emailSearch" type="text" class="form-control" placeholder="Search emails..."
-                            autocomplete="off" aria-label="Search emails">
+                               autocomplete="off" aria-label="Search emails">
                     </div>
                 </div>
 
                 <div id="emailList" class="list-group list-group-flush email-list flex-grow-1"
-                    style="max-height:70vh;overflow-y:auto;" data-next-page="1" aria-live="polite" aria-busy="false">
+                     style="max-height:70vh;overflow-y:auto;" data-next-page="1"
+                     aria-live="polite" aria-busy="false">
                     <!-- items are appended here via /history/page/<page> -->
                     <div id="loadSentinel" class="text-center py-3 small text-muted">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -71,7 +72,7 @@
 
                     <div id="emailBody" class="email-body mb-4">
                         <iframe id="emailBodyFrame" class="email-body-frame w-100 border-0"
-                            sandbox="allow-same-origin"></iframe>
+                                sandbox="allow-same-origin"></iframe>
                     </div>
 
                 </article>
@@ -84,11 +85,8 @@
     /* Outer box */
     .email-body {
         height: 60vh;
-        /* make it nice and tall; tweak as you like */
         max-height: 800px;
-        /* safety cap if you want */
         overflow: hidden;
-        /* prevent the iframe from pushing beyond this box */
     }
 
     /* Iframe fills the box and scrolls inside */
@@ -103,4 +101,46 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/history.js') }}" defer></script>
+
+<script>
+    // When arriving with ?email_id=<id>, auto-select that email in the list
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const selectedId = params.get('email_id') || params.get('eid') || params.get('selected');
+        if (!selectedId) return;
+
+        const listEl = document.getElementById('emailList');
+        if (!listEl) return;
+
+        function trySelect() {
+            const targets = listEl.querySelectorAll(
+                '[data-email-id], [data-eid], [data-id], [data-emailid]'
+            );
+            for (const el of targets) {
+                const v = el.dataset.emailId
+                    || el.dataset.eid
+                    || el.dataset.id
+                    || el.getAttribute('data-id')
+                    || el.getAttribute('data-email-id')
+                    || el.getAttribute('data-emailid');
+                if (v && String(v) === String(selectedId)) {
+                    el.click();  // Let existing history.js logic load the pane
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // First try immediately (in case items are already rendered)
+        if (trySelect()) return;
+
+        // Otherwise watch for the list to be populated by history.js
+        const observer = new MutationObserver(() => {
+            if (trySelect()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(listEl, { childList: true, subtree: true });
+    });
+</script>
 {% endblock %}

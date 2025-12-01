@@ -1,12 +1,71 @@
-{#Tolu Kolade#}
-
+{# Dashboard #}
 {% extends "base.html" %}
 
 {% block title %}Dashboard{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
+<div class="page-header mb-4">
     <h1>Dashboard</h1>
-    {{code}}
+    {% if user %}
+    <p class="text-muted">Welcome back, {{ user }}.</p>
+    {% endif %}
 </div>
+
+{% if sections|length == 0 %}
+    <div class="alert alert-info">
+        No categories or emails found yet. Use the <strong>Settings</strong> page to add categories and update emails.
+    </div>
+{% endif %}
+
+<div class="row g-4">
+    {% for section in sections %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+
+            <!-- Category label -->
+            <div class="card-header bg-white border-0 pb-0">
+                <span class="text-uppercase text-muted small fw-semibold">
+                    {{ section.display_name or section.category }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                {% if section.emails|length == 0 %}
+                    <p class="text-muted small mb-0">No emails in this category yet.</p>
+                {% else %}
+                    {% for email in section.emails %}
+                    <div class="mb-3 {% if not loop.last %}border-bottom pb-2{% endif %}">
+                        <a class="text-decoration-none text-reset"
+                           href="{{ url_for('view_all_emails') }}?email_id={{ email.id }}">
+                            <div class="fw-semibold text-truncate">
+                                {{ email.subject or "No subject" }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ email.sender_name or email.sender_addr }}
+                                {% if email.collected_date %}
+                                    · {{ email.collected_date.strftime('%b %d, %Y') }}
+                                {% endif %}
+                            </div>
+                            {% if email.preview %}
+                            <div class="small text-muted text-truncate mt-1">
+                                {{ email.preview }}
+                            </div>
+                            {% endif %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
 {% endblock %}

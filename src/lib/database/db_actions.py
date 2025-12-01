@@ -10,7 +10,7 @@ from src.lib.database.db_conn import DB_Connection
 class DB_Actions:
     conn = DB_Connection()
 
-    # login
+# login 
     def _get_pass(self, user_id):
         '''
         gets password for user
@@ -20,9 +20,9 @@ class DB_Actions:
         # print(password)
         try:
             return password[0][0]
-        except Exception:
+        except:
             return None
-
+        
     def _add_new_user(self, user_id, password):
         '''
         add a new credential to the db
@@ -30,8 +30,8 @@ class DB_Actions:
         query = '''INSERT INTO public.user_data (user_id, user_pass, priv_cats)
         VALUES (%s, %s, %s)'''  # TODO: hashing?
         return self.conn._set(query, (user_id, password, "{}",))
-
-    # get
+    
+# get
     def _gather_data_by_user(self, user_id):
         '''
         This functions uses SQL to gather all emails by user_id.
@@ -64,7 +64,7 @@ class DB_Actions:
         data = self.conn._get(query, (user_id, category, limit, offset,))
 
         return [list(t) for t in data]
-
+    
     def _gather_email_by_page(self, uid, limit, offset):
         '''
         Docstring for _gather_email_by_page
@@ -79,7 +79,7 @@ class DB_Actions:
         LIMIT %s OFFSET %s'''
         rows = self.conn._get(query, (uid, limit, offset,))
         return rows
-
+    
     def _gather_categories(self, credentials):
         '''
         get categories
@@ -95,17 +95,18 @@ class DB_Actions:
             return []
         try:
             categories = data[0][0]
-        except Exception:
+        except:
             print("ERROR: category failed to be retrieved")
             categories = None
         return categories
-
+    
     def _gather_user_key(self, credentials) -> str:
+
         query = '''SELECT user_key FROM public.user_data
         WHERE user_id = %s AND user_pass = %s'''  # TODO: hashing?
         data = self.conn._get(query, credentials)
         return data[0][0]
-
+    
     def _gather_email(self, uid, eid):
         '''
         get an email based on the email id. user id must match
@@ -123,7 +124,7 @@ class DB_Actions:
         if not row or not row[0]:
             return None
         return row[0]
-
+        
     def _get_cat_by_sender(self, uid, sender):
         query = '''SELECT cat->>'name'
         FROM public.user_data
@@ -140,15 +141,16 @@ class DB_Actions:
             print(exc)
             return 'misc'
 
-    # set
+# set
     def _add_email_data(self, data):
         '''
         The param data should ideally be a single tuple or 1D array
         '''
+        # Maybe format into tuple before
         query = '''INSERT INTO public.email_data (user_id, sender_add, category, data, delete_date) 
         VALUES (%s, %s::jsonb, %s, %s::jsonb, %s)'''
         result = self.conn._set(query=query, args=data)
-
+        
         if result == DB_CONST.DB_ERROR:
             print('Unable to write data')
 
@@ -156,7 +158,7 @@ class DB_Actions:
         '''
         Save categories and then recalculate delete_date for this user's emails.
         
-        :param credentials: tuple of (username, password)
+        :param credentials: tuple of username, password
         '''
         query = '''INSERT INTO public.user_data (user_id, user_pass, priv_cats)
         VALUES (%s, %s, %s::jsonb)
@@ -172,7 +174,7 @@ class DB_Actions:
             print("WARNING: failed to recalculate delete dates:", repr(e))
 
         return data
-
+    
     def _add_email_key(self, credentials, key):
         '''
         saves or updates the user key to their email
@@ -185,14 +187,14 @@ class DB_Actions:
         data = self.conn._set(query, credentials + (key,))  # TODO: alex, can you check this logic?
         return data
 
-    # actions
+#actions
     def _delete_old_emails(self):
         now = dt.now(tz.utc)
         query = 'DELETE FROM public.email_data WHERE delete_date < %s'
         result = self.conn._set(query, (now,))
 
         now.astimezone()
-        # fixed f-string quoting
+        # fixed quoting in f-string
         print(f"All emails past {now.strftime('%m/%d/%Y')} have been deleted.")
 
         if result == DB_CONST.DB_ERROR:
@@ -203,7 +205,7 @@ class DB_Actions:
         check = self.conn._set(query, (category, user, sender,))
         print(check)
 
-    # ------ NEW: recalc delete_date when categories change ------
+    # ------ new helper: recalc delete_date after category changes ------
     def _recalculate_delete_dates_for_user(self, user_id, default_days=30):
         """
         For the given user, look at priv_cats, build:
