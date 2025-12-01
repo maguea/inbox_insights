@@ -120,7 +120,7 @@ class DB_Actions:
         return rows
     
     def _get_cat_by_sender(self, sender):
-        query = '''SELECT category FROM public.email_data WHERE sender_id = %s LIMIT 1;'''
+        query = '''SELECT category FROM public.email_data WHERE data->>'sender_addr' = %s LIMIT 1;'''
         rows = self.conn._get(query, (sender,))
         try:
             return rows[0][0]
