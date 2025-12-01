@@ -46,7 +46,7 @@ def _email_move_to_database(user, server, key=None):
         print("here4")
 
         # Default category/delete_date
-        category_name = db._get_cat_by_sender(sender_addr) or 'misc'
+        category_name = db._get_cat_by_sender_exp(user, sender_addr) or 'misc'
         delete_date = None
         print("here5")
         

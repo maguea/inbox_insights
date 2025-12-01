@@ -123,6 +123,21 @@ class DB_Actions:
         query = '''SELECT category FROM public.email_data WHERE data->>'sender_addr' = %s LIMIT 1;'''
         rows = self.conn._get(query, (sender,))
         try:
+            return rows[0]
+        except Exception as exc:
+            print(exc)
+            return None
+        
+    def _get_cat_by_sender_exp(self, uid, sender):
+        query = '''SELECT cat->>'name'
+        FROM public.user_data u
+        CROSS JOIN LATERAL jsonb_array_elements(u.priv_cats) AS cat
+        CROSS JOIN LATERAL jsonb_array_elements_text(cat->'emails') AS email(pattern)
+        WHERE u.user_id = %s
+          AND %s LIKE REPLACE(pattern, '*', '%%')
+        LIMIT 1;'''
+        rows = self.conn._get(query, (uid, sender))
+        try:
             return rows[0][0]
         except Exception as exc:
             print(exc)
