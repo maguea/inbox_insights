@@ -78,6 +78,7 @@ def list_emails():
     page = request.args.get("page", default=1, type=int)
     if page < 1:
         page = 1
+        
     emails = _email_get_by_page(username, page, cat)
 
     return jsonify(emails)
