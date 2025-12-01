@@ -6,6 +6,7 @@ from email.utils import parseaddr, parsedate_to_datetime
 from datetime import datetime
 
 from src.lib import EMAIL_CONST
+from src.lib.database.db_actions import DB_Actions
 
 class Gather:
     def __init__(self, username, password, imap_server, mailbox='INBOX'):
@@ -72,6 +73,10 @@ class Gather:
         '''
         subject = msg.get('Subject', 'No Subject')
         return self._decode_header_value(subject)
+    
+    def _get_category(self, sender):
+        category = DB_Actions._get_cat_by_sender(sender)
+        return category
 
     def _get_date_info(self, msg):
         '''
@@ -243,6 +248,7 @@ class Gather:
                 body = self._get_html_body(msg)
                 print(f"  Body length: {len(body)}")
                 preview = self._create_preview(body)
+                category = self._get_category(sender)
     
                 # Build email object (with structured sender)
                 email_obj = {
@@ -252,10 +258,11 @@ class Gather:
                     "timestamp": timestamp,
                     "date": date_str,
                     "body": body,
+                    "category" : category,
                 }
                 
                 result.append(email_obj)
-                print(f"  ✅ Email from {sender.get('address') or sender.get('name') or 'unknown'} processed")
+                print(f"Email from {sender.get('address') or sender.get('name') or 'unknown'} processed")
     
                 # Mark as read (uncomment to enable)
                 # self.conn.store(eid, '+FLAGS', r'(\Seen)')

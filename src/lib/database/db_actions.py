@@ -118,6 +118,11 @@ class DB_Actions:
         LIMIT %s OFFSET %s'''
         rows = self.conn._get(query, (uid, limit, offset,))
         return rows
+    
+    def _get_cat_by_sender(self, sender):
+        query = '''SELECT category FROM public.email_data WHERE sender_id = %s LIMIT 1;'''
+        rows = self.conn._get(query, (sender,))
+        return rows[0][0]
 
 
 # set
