@@ -43,7 +43,7 @@ def _email_move_to_database(user, server, key=None):
         # Default category/delete_date
         # category_name = db._get_cat_by_sender(user, sender_addr) or 'misc'
         category_name = email_obj.get("category")
-        delete_date = None
+        delete_date = None # TODO: get delete from date
         
         # If no category matched, still default to 30 days
         if delete_date is None:

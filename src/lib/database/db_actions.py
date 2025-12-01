@@ -129,12 +129,8 @@ class DB_Actions:
         LIMIT 1;'''
         rows = self.conn._get(query, (uid, sender))
         try:
-<<<<<<< HEAD
-            return rows[0]
-=======
             print(rows)
             return rows[0][0]
->>>>>>> b31baa39503b56365692eaba9f8759a98fcf97c6
         except Exception as exc:
             print(exc)
             return 'misc'
