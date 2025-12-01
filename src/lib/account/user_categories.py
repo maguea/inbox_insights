@@ -2,22 +2,24 @@
 import json
 from src.lib.database.db_actions import DB_Actions
 
-def save_categories(categories: list[dict]):
+def save_categories(user, categories, password=""):
     """
-    Save a list of categories (as dicts) into .env.
+    Save a list of categories (as dicts) into db.
     Example category dict:
       {
         "name": "Work",
         "emails": ["boss@corp.com"],
-        "domains": ["corp.com"],
-        "shared": True,
         "days_until_delete": 30
       }
     """
     # TODO: implement
-    set_key(str(ENV_PATH), ENV_KEY, json.dumps(categories))
 
-def load_categories(user, password=None):
+    # save category
+    db = DB_Actions()
+    categories_json = json.dumps(categories)
+    return db._add_categories((user, password,), categories_json)
+
+def load_categories(user, password=""):
     """
     Load categories list from server.
     """

@@ -1,4 +1,3 @@
-import json
 from datetime import datetime as dt
 from datetime import timezone as tz
 
@@ -73,13 +72,13 @@ class DB_Actions:
         WHERE user_id = %s AND user_pass = %s''' # TODO: hashing?
         data = self.conn._get(query, credentials)
         if not data:
+            print("STATUS: empty category")
+            print(data)
             return []
         try:
-            print("DEBUG: ")
-            print(data[0][0])
-            categories = json.loads(data[0][0])
-        except json.JSONDecodeError:
-            print("ERROR: failed to parse categories JSON: " + data)
+            categories = data[0][0]
+        except:
+            print("ERROR: category failed to be retrieved")
             categories = None
         return categories
     
@@ -144,7 +143,7 @@ class DB_Actions:
         :param credentials: tuple of username, password
         '''
         query = '''INSERT INTO public.user_data (user_id, user_pass, priv_cats)
-        VALUES (%s, %s, %s)
+        VALUES (%s, %s, %s::jsonb)
         ON CONFLICT (user_id) DO UPDATE SET priv_cats = EXCLUDED.priv_cats''' # TODO: hashing?
         data = self.conn._set(query, credentials + (cats,)) # TODO: alex, can you check this logic?
         return data

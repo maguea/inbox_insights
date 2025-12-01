@@ -6,34 +6,63 @@
 <div class="page-header mb-4">
     <h1>Login</h1>
 </div>
-<div id="login_form">
-    <form method="POST" id="form_login">
-        <!-- Email input -->
-        <div data-mdb-input-init class="form-outline mb-4">
-            <input type="email" id="form2Example1" class="form-control" name="username" />
-            <label class="form-label" name="username">Email address</label>
-        </div>
+<div class="card">
+    <div class="card-body">
+        <form id="emailForm">
+            <div class="mb-3">
+                <label for="user" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="user" name="user"
+                    placeholder="{% if user %}{{ user }}{% else %}mail@example.com{% endif %}"
+                    value="{% if user %}{{ user }}{% endif %}" required>
+                <div class="form-text">Your full email address</div>
+            </div>
 
-        <!-- Password input -->
-        <div data-mdb-input-init class="form-outline mb-4">
-            <input type="password" id="form2Example2" class="form-control" name="password" />
-            <label class="form-label" for="password">Password</label>
-        </div>
-
-        <!-- 2 column grid layout for inline styling -->
-        <div class="row mb-4">
-            <div class="col d-flex justify-content-center">
-                <!-- Checkbox -->
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="form2Example31" checked />
-                    <label class="form-check-label" for="form2Example31"> Remember me </label>
+            <div class="mb-3">
+                <label for="key" class="form-label">
+                    App Password / Key
+                </label>
+                <input type="password" class="form-control" id="key" name="key"
+                    placeholder="Your email app password or API key" required>
+                <div class="form-text">
+                    Use your email provider's app password or generated key (not your normal login password).
                 </div>
             </div>
-        </div>
 
-        <!-- Submit button -->
-        <button type="submit" id="submitBtn" class="btn btn-primary btn-block mb-4">Sign
-            in</button>
-    </form>
+            <div class="mb-3">
+                <label class="form-label">IMAP Server</label>
+                <div class="btn-group" role="group" aria-label="IMAP Server selection">
+                    {# derive domain from the email string if present #}
+                    {% if user %}
+                    {% set domain = user.split('@')[-1] %}
+                    {% else %}
+                    {% set domain = '' %}
+                    {% endif %}
+
+                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {# default to
+                        Gmail if no user yet or if email looks like a Gmail address #} {% if not user or 'gmail.com' in
+                        domain %} checked {% endif %}>
+                    <label class="btn btn-outline-primary" for="gmail">Gmail</label>
+
+                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {#
+                        default to Outlook if email domain looks like an Outlook/Microsoft one #} {% if 'outlook.com' in
+                        domain or 'hotmail.com' in domain or 'live.com' in domain or 'office365.com' in domain %}
+                        checked {% endif %}>
+                    <label class="btn btn-outline-primary" for="outlook">Outlook</label>
+                </div>
+                <div class="form-text mt-2">Select your email provider</div>
+            </div>
+
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    {% if user %}
+                    Update Email
+                    {% else %}
+                    Save & Connect
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
