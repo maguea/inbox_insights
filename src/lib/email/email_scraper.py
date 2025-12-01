@@ -74,9 +74,9 @@ class Gather:
         subject = msg.get('Subject', 'No Subject')
         return self._decode_header_value(subject)
     
-    def _get_category(self, sender):
+    def _get_category(self, uid, sender):
         db = DB_Actions()
-        category = db._get_cat_by_sender(sender)
+        category = db._get_cat_by_sender(uid, sender)
         return category
 
     def _get_date_info(self, msg):
@@ -196,7 +196,7 @@ class Gather:
             return clean
         return clean[:length] + "..."
 
-    def _fetch_unread_and_mark_seen(self):
+    def _fetch_unread_and_mark_seen(self, user):
         '''
         Fetch unread emails and return as a list in the format:
         [
@@ -249,10 +249,11 @@ class Gather:
                 body = self._get_html_body(msg)
                 print(f"  Body length: {len(body)}")
                 preview = self._create_preview(body)
-                category = self._get_category(sender)
+                category = self._get_category(user, sender.get('address'))
 
-                if category:
-                    self.conn.uid('STORE', eid, '+FLAGS', '\\Deleted')
+                # TODO: uncomment before publish
+                # if category:
+                #     self.conn.uid('STORE', eid, '+FLAGS', '\\Deleted')
 
                 # Build email object (with structured sender)
                 email_obj = {

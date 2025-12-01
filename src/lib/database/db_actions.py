@@ -118,15 +118,26 @@ class DB_Actions:
         LIMIT %s OFFSET %s'''
         rows = self.conn._get(query, (uid, limit, offset,))
         return rows
-    
-    def _get_cat_by_sender(self, sender):
-        query = '''SELECT category FROM public.email_data WHERE data->>'sender_addr' = %s LIMIT 1;'''
-        rows = self.conn._get(query, (sender,))
+        
+    def _get_cat_by_sender(self, uid, sender):
+        query = '''SELECT cat->>'name'
+        FROM public.user_data
+        CROSS JOIN LATERAL jsonb_array_elements(priv_cats) AS cat
+        CROSS JOIN LATERAL jsonb_array_elements_text(cat->'emails') AS email(pattern)
+        WHERE user_id = %s
+        AND %s LIKE REPLACE(pattern, '*', '%%')
+        LIMIT 1;'''
+        rows = self.conn._get(query, (uid, sender))
         try:
+<<<<<<< HEAD
             return rows[0]
+=======
+            print(rows)
+            return rows[0][0]
+>>>>>>> b31baa39503b56365692eaba9f8759a98fcf97c6
         except Exception as exc:
             print(exc)
-            return None
+            return 'misc'
 
 # set
     def _add_email_data(self, data):
