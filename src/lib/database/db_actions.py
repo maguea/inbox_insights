@@ -49,13 +49,13 @@ class DB_Actions:
 
         return [list(t) for t in data]
 
-    def _gather_data_by_category(self, category):
+    def _gather_data_by_category(self, category, limit, offset):
         '''
         This functions uses SQL to gather all emails by category.
         Ensure in previous function that user_id == login id for private categories
         '''
-        query = 'SELECT * FROM public.email_data WHERE category = %s'
-        data = self.conn._get(query, (category,))
+        query = 'SELECT * FROM public.email_data WHERE category = %s ORDER BY collected_date DESC LIMIT %s OFFSET %s'
+        data = self.conn._get(query, (category, limit, offset,))
 
         return [list(t) for t in data]
     
