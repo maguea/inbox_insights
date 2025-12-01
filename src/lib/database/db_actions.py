@@ -8,20 +8,17 @@ class DB_Actions:
     conn = DB_Connection()
 
 # login 
-    def _check_pass(self, user_id, password):
+    def _get_pass(self, user_id):
         '''
-        Check if user is in the database. return missing account, success, or incorrect account info
+        gets password for user
         '''
         query = 'SELECT user_pass FROM public.user_data WHERE user_id = %s'
-        check = self.conn._get(query=query, args=(user_id,))
-        print(check)
-
-        if check is None:
-            return EMAIL_CONST.MISSING_ACCOUNT
-        elif check == password:
-            return EMAIL_CONST.LOGIN_SUCCESS
-        else:
-            return EMAIL_CONST.INCORRECT_ACCOUNT_INFO
+        password = self.conn._get(query=query, args=(user_id,))
+        # print(password)
+        try:
+            return password[0][0]
+        except:
+            return None
         
     def _add_new_user(self, user_id, password):
         '''
@@ -171,3 +168,20 @@ class DB_Actions:
 
         if result == DB_CONST.DB_ERROR:
             print('Email delete error')
+
+    def _apply_categories(self, user, category_name, email_patterns):
+        '''
+        apply the email patterns to user's email with the category name
+        '''
+        query = """UPDATE public.email_data e
+            SET category = %s
+            WHERE e.user_id = %s
+              AND EXISTS (
+                SELECT 1
+                FROM unnest(%s::text[]) AS patt(p)
+                WHERE e.sender_add->>'sender_addr' ILIKE patt.p
+              )"""
+        result = self.conn._set(query, (category_name, user, email_patterns))
+        if result == DB_CONST.DB_ERROR:
+            print('Email delete error')
+

@@ -25,3 +25,7 @@ def load_categories(user, password=""):
     """
     db = DB_Actions()
     return db._gather_categories((user, password,))
+
+def apply_categories():
+    # should apply categories to emails
+    return None

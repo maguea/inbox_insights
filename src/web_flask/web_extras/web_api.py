@@ -7,6 +7,26 @@ from src.lib import EMAIL_CONST
 from src.lib.email.email_actions import _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
 from src.lib.email.email_move2_db import _email_move_to_database
 from src.lib.account.user_categories import save_categories, load_categories
+from src.lib.account.user_accounts import _user_login
+
+@api_bp.post('/check_user')
+def check_user_account():
+    username = request.form.get('user')
+    password = request.form.get('pass')
+    server = request.form.get('server')
+    
+    if not password:
+        password = ""
+
+    result = _user_login(username, password)
+    if result == EMAIL_CONST.LOGIN_SUCCESS:
+        session['email_user'] = username
+        session['email_server'] = server
+        return jsonify({'ok': True, 'msg':'successful login'})
+    elif result == EMAIL_CONST.INCORRECT_ACCOUNT_INFO:
+        return jsonify({'ok': True, 'msg':'incorrect password'})
+    else:
+        return jsonify({'ok': False})
 
 @api_bp.get('/check_email')
 def check_email_account():

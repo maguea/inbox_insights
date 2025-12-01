@@ -30,13 +30,12 @@ def index():
 
 @app.route('/config')
 def client_settings():
-    user = EMAIL_CONST.GMAIL['user']
+    user = session.get('email_user')
     return render_template('settings.html', user=user)
 
 @app.route('/login')
 def client_login():
-    user = EMAIL_CONST.GMAIL['user']
-    return render_template('login_page.html', user=user)
+    return render_template('login_page.html')
 
 @app.route('/history')
 def view_all_emails():

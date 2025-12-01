@@ -4,8 +4,11 @@
 
 {% block page_content %}
 <div class="page-header mb-4">
-    <h1>Login</h1>
+    <h1 id="pageTitle">Login</h1>
 </div>
+
+<div id="statusMsg" class="alert d-none" role="alert"></div>
+
 <div class="card">
     <div class="card-body">
         <form id="emailForm">
@@ -18,51 +21,97 @@
             </div>
 
             <div class="mb-3">
-                <label for="key" class="form-label">
-                    App Password / Key
+                <label for="pass" class="form-label">
+                    Account Password
                 </label>
-                <input type="password" class="form-control" id="key" name="key"
-                    placeholder="Your email app password or API key" required>
+                <input type="password" class="form-control" id="pass" name="pass" placeholder="Your account password">
                 <div class="form-text">
-                    Use your email provider's app password or generated key (not your normal login password).
+                    Use the normal password you use for this account.
                 </div>
             </div>
 
+            {# --- IMAP server option block --- #}
             <div class="mb-3">
-                <label class="form-label">IMAP Server</label>
+                <label class="form-label">IMAP Server (optional)</label>
                 <div class="btn-group" role="group" aria-label="IMAP Server selection">
-                    {# derive domain from the email string if present #}
                     {% if user %}
                     {% set domain = user.split('@')[-1] %}
                     {% else %}
                     {% set domain = '' %}
                     {% endif %}
 
-                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {# default to
-                        Gmail if no user yet or if email looks like a Gmail address #} {% if not user or 'gmail.com' in
-                        domain %} checked {% endif %}>
+                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {% if not user
+                        or 'gmail.com' in domain %}checked{% endif %}>
                     <label class="btn btn-outline-primary" for="gmail">Gmail</label>
 
-                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {#
-                        default to Outlook if email domain looks like an Outlook/Microsoft one #} {% if 'outlook.com' in
-                        domain or 'hotmail.com' in domain or 'live.com' in domain or 'office365.com' in domain %}
-                        checked {% endif %}>
+                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {%
+                        if 'outlook.com' in domain or 'hotmail.com' in domain or 'live.com' in domain or 'office365.com'
+                        in domain %}checked{% endif %}>
                     <label class="btn btn-outline-primary" for="outlook">Outlook</label>
                 </div>
-                <div class="form-text mt-2">Select your email provider</div>
+                <div class="form-text mt-2">
+                    Choose your provider if you want to save which IMAP server to use.
+                </div>
             </div>
-
+            {# --- end IMAP block --- #}
 
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                 <button type="submit" class="btn btn-primary" id="submitBtn">
-                    {% if user %}
-                    Update Email
-                    {% else %}
-                    Save & Connect
-                    {% endif %}
+                    Login
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('emailForm');
+        const btn = document.getElementById('submitBtn');
+        const title = document.getElementById('pageTitle');
+        const statusMsg = document.getElementById('statusMsg');
+
+        let mode = 'login';  // 'login' or 'create'
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                const resp = await fetch('{{ url_for("api.check_user_account") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await resp.json();
+
+                statusMsg.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-info');
+
+                if (data.ok && data.msg === 'successful login') {
+                    // Redirect to index on successful login
+                    window.location.href = '{{ url_for("index") }}';
+                } else if (data.ok && data.msg === 'incorrect password') {
+                    statusMsg.classList.add('alert', 'alert-danger');
+                    statusMsg.textContent = 'Incorrect password. Please try again.';
+                    mode = 'login';
+                    btn.textContent = 'Login';
+                    title.textContent = 'Login';
+                } else {
+                    // ok === false ⇒ missing account
+                    statusMsg.classList.add('alert', 'alert-info');
+                    statusMsg.textContent = 'No account found for that email. Click "Create Account" to register.';
+                    mode = 'create';
+                    btn.textContent = 'Create Account';
+                    title.textContent = 'Create Account';
+                }
+            } catch (err) {
+                statusMsg.classList.remove('d-none');
+                statusMsg.classList.add('alert', 'alert-danger');
+                statusMsg.textContent = 'There was a problem contacting the server.';
+                console.error(err);
+            }
+        });
+    });
+</script>
 {% endblock %}
