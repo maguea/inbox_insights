@@ -54,10 +54,28 @@ class DB_Actions:
         This functions uses SQL to gather all emails by category.
         Ensure in previous function that user_id == login id for private categories
         '''
-        query = 'SELECT * FROM public.email_data WHERE user_id = %s AND category = %s ORDER BY collected_date DESC LIMIT %s OFFSET %s'
+        query = '''SELECT id, sender_add, category, data, collected_date, delete_date 
+        FROM public.email_data 
+        WHERE user_id = %s AND category = %s 
+        ORDER BY collected_date DESC LIMIT %s OFFSET %s'''
         data = self.conn._get(query, (user_id, category, limit, offset,))
 
         return [list(t) for t in data]
+    
+    def _gather_email_by_page(self, uid, limit, offset):
+        '''
+        Docstring for _gather_email_by_page
+        
+        :param uid: username
+        :param limit: how many emails to return
+        :param offset: where to start from
+        '''
+        query = '''SELECT id, sender_add, category, data, collected_date, delete_date FROM email_data
+        WHERE user_id = %s
+        ORDER BY collected_date DESC
+        LIMIT %s OFFSET %s'''
+        rows = self.conn._get(query, (uid, limit, offset,))
+        return rows
     
     def _gather_categories(self, credentials):
         '''
@@ -103,21 +121,6 @@ class DB_Actions:
         if not row or not row[0]:
             return None
         return row[0]
-    
-    def _gather_email_by_page(self, uid, limit, offset):
-        '''
-        Docstring for _gather_email_by_page
-        
-        :param uid: username
-        :param limit: how many emails to return
-        :param offset: where to start from
-        '''
-        query = '''SELECT id, sender_add, category, data, collected_date, delete_date FROM email_data
-        WHERE user_id = %s
-        ORDER BY collected_date DESC
-        LIMIT %s OFFSET %s'''
-        rows = self.conn._get(query, (uid, limit, offset,))
-        return rows
         
     def _get_cat_by_sender(self, uid, sender):
         query = '''SELECT cat->>'name'

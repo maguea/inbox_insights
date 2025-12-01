@@ -68,7 +68,7 @@ def _email_get_by_page(user, page, cat, per_page=50):
     if not cat:
         rows = db._gather_email_by_page(uid=user, limit=per_page, offset=offset)
     else:
-        rows = db._gather_data_by_category(uid=user, category=cat, limit=per_page, offset=offset)
+        rows = db._gather_data_by_category(user_id=user, category=cat, limit=per_page, offset=offset)
 
     # Turn rows into simple dicts if `rows` are tuples/records
     emails = []
