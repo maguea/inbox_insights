@@ -19,7 +19,6 @@ def _email_move_to_database(user, server, key=None):
     :param key:    email password (if None, pulled from DB)
     '''
     db = DB_Actions()
-    print("here1")
 
     # Get password if not provided
     if key is None:
@@ -29,26 +28,22 @@ def _email_move_to_database(user, server, key=None):
     # Load category rules from categories file
     categories = load_categories(user=user)  # list of dicts with name/emails/days_until_delete
 
-    print("here1.5")
     # Fetch unread emails from IMAP
     gather = Gather(user, key, server)
-    emails = gather._fetch_unread_and_mark_seen()
-    print("here2")
+    emails = gather._fetch_unread_and_mark_seen(user=user)
 
     now = dt.now(tz.utc)
     db._delete_old_emails()
-    print("here3")
 
     for email_obj in emails:
         sender_info = email_obj.get("sender", {}) or {}
         sender_addr = sender_info.get("address") or ""
         sender_name = sender_info.get("name") or ""
-        print("here4")
 
         # Default category/delete_date
-        category_name = db._get_cat_by_sender_exp(user, sender_addr) or 'misc'
+        # category_name = db._get_cat_by_sender(user, sender_addr) or 'misc'
+        category_name = email_obj.get("category")
         delete_date = None
-        print("here5")
         
         # If no category matched, still default to 30 days
         if delete_date is None:
@@ -76,5 +71,4 @@ def _email_move_to_database(user, server, key=None):
             data_json,          # data (text/JSON)
             delete_date,         # delete_date (timestamp or None)
         )
-        print("here6")
         db._add_email_data(row)
