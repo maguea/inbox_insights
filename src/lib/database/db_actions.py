@@ -123,7 +123,7 @@ class DB_Actions:
         query = '''SELECT category FROM public.email_data WHERE data->>'sender_addr' = %s LIMIT 1;'''
         rows = self.conn._get(query, (sender,))
         try:
-            return rows[0][0]
+            return rows[0]
         except Exception as exc:
             print(exc)
             return None
