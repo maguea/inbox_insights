@@ -75,7 +75,8 @@ class Gather:
         return self._decode_header_value(subject)
     
     def _get_category(self, sender):
-        category = DB_Actions._get_cat_by_sender(sender)
+        db = DB_Actions()
+        category = db._get_cat_by_sender(sender)
         return category
 
     def _get_date_info(self, msg):
@@ -261,7 +262,7 @@ class Gather:
                     "timestamp": timestamp,
                     "date": date_str,
                     "body": body,
-                    "category" : category,
+                    "category" : category
                 }
                 
                 result.append(email_obj)

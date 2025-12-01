@@ -49,13 +49,13 @@ class DB_Actions:
 
         return [list(t) for t in data]
 
-    def _gather_data_by_category(self, category, limit, offset):
+    def _gather_data_by_category(self, user_id, category, limit, offset):
         '''
         This functions uses SQL to gather all emails by category.
         Ensure in previous function that user_id == login id for private categories
         '''
-        query = 'SELECT * FROM public.email_data WHERE category = %s ORDER BY collected_date DESC LIMIT %s OFFSET %s'
-        data = self.conn._get(query, (category, limit, offset,))
+        query = 'SELECT * FROM public.email_data WHERE user_id = %s AND category = %s ORDER BY collected_date DESC LIMIT %s OFFSET %s'
+        data = self.conn._get(query, (user_id, category, limit, offset,))
 
         return [list(t) for t in data]
     
@@ -104,7 +104,7 @@ class DB_Actions:
             return None
         return row[0]
     
-    def _gather_email_by_page(self, uid, category, limit, offset):
+    def _gather_email_by_page(self, uid, limit, offset):
         '''
         Docstring for _gather_email_by_page
         
@@ -122,8 +122,11 @@ class DB_Actions:
     def _get_cat_by_sender(self, sender):
         query = '''SELECT category FROM public.email_data WHERE sender_id = %s LIMIT 1;'''
         rows = self.conn._get(query, (sender,))
-        return rows[0][0]
-
+        try:
+            return rows[0][0]
+        except Exception as exc:
+            print(exc)
+            return None
 
 # set
     def _add_email_data(self, data):
