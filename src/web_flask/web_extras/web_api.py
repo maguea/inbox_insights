@@ -8,6 +8,7 @@ from src.lib.email.email_actions import _email_login, _email_save_key, _email_ge
 from src.lib.email.email_move2_db import _email_move_to_database
 from src.lib.account.user_categories import save_categories, load_categories
 from src.lib.account.user_accounts import _user_login
+from src.lib.database.db_actions import DB_Actions
 
 @api_bp.post('/check_user')
 def check_user_account():
@@ -91,6 +92,24 @@ def get_email(eid: int):
     if not email:
         abort(404)
     return jsonify(email)
+
+@api_bp.delete('/emails/<int:eid>')
+def delete_email(eid: int):
+    '''
+    Delete a single email by email id.
+    Requires the user to be logged in.
+    '''
+    username = session.get("email_user")
+    if not username:
+        return jsonify({"ok": False, "msg": "No logged in email user"}), 401
+
+    db = DB_Actions()
+    success = db._delete_email(username, eid)
+
+    if success:
+        return jsonify({"ok": True, "msg": f"Email {eid} deleted successfully"})
+    else:
+        return jsonify({"ok": False, "msg": f"Failed to delete email {eid}"}), 500
 
 @api_bp.post("/emails/update")
 def emails_update():

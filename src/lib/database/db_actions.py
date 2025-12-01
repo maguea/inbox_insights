@@ -163,6 +163,25 @@ class DB_Actions:
         return data
 
 #actions
+    def _delete_email(self, user_id, email_id):
+        '''
+        Delete a single email by email_id and user_id.
+        Ensures user owns the email before deletion.
+        
+        :param user_id: the user id
+        :param email_id: the email id to delete
+        :return: True if successful, False if error or email not found
+        '''
+        query = 'DELETE FROM public.email_data WHERE user_id = %s AND id = %s'
+        result = self.conn._set(query, (user_id, email_id,))
+
+        if result == DB_CONST.DB_ERROR:
+            print(f'Error deleting email {email_id} for user {user_id}')
+            return False
+        
+        print(f'Email {email_id} deleted for user {user_id}')
+        return True
+
     def _delete_old_emails(self):
         now = dt.now(tz.utc)
         query = 'DELETE FROM public.email_data WHERE delete_date < %s'
