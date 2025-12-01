@@ -25,7 +25,7 @@ def index():
     username = session.get('email_user')
     server   = session.get('email_server')
     if not username and not server:
-        return redirect(url_for('client_login')), 401
+        return redirect(url_for('client_login'))
     return render_template('dashboard.html')
 
 @app.route('/config')
