@@ -172,3 +172,8 @@ class DB_Actions:
 
         if result == DB_CONST.DB_ERROR:
             print('Email delete error')
+
+    def _categorize(self, user, sender, category):
+        query = '''UPDATE public.email_data SET category = %s WHERE user_id = %s AND sender_id = %s;'''
+        check = self.conn._set(query, (category, user, sender,))
+        print(check)
