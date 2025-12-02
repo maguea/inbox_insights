@@ -262,7 +262,7 @@ class Gather:
                 }
                 
                 result.append(email_obj)
-                print(f"  ✅ Email from {sender.get('address') or sender.get('name') or 'unknown'} processed")
+                print(f"Email from {sender.get('address') or sender.get('name') or 'unknown'} processed")
     
                 # Mark as read (uncomment to enable)
                 # self.conn.store(eid, '+FLAGS', r'(\Seen)')
