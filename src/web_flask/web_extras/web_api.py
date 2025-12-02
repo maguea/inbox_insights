@@ -5,7 +5,28 @@ import json
 from . import api_bp
 from src.lib import EMAIL_CONST
 from src.lib.email.email_actions import _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
+from src.lib.email.email_move2_db import _email_move_to_database
 from src.lib.account.user_categories import save_categories, load_categories
+from src.lib.account.user_accounts import _user_login
+
+@api_bp.post('/check_user')
+def check_user_account():
+    username = request.form.get('user')
+    password = request.form.get('pass')
+    server = request.form.get('server')
+    
+    if not password:
+        password = ""
+
+    result = _user_login(username, password)
+    if result == EMAIL_CONST.LOGIN_SUCCESS:
+        session['email_user'] = username
+        session['email_server'] = server
+        return jsonify({'ok': True, 'msg':'successful login'})
+    elif result == EMAIL_CONST.INCORRECT_ACCOUNT_INFO:
+        return jsonify({'ok': True, 'msg':'incorrect password'})
+    else:
+        return jsonify({'ok': False})
 
 @api_bp.get('/check_email')
 def check_email_account():
@@ -23,11 +44,12 @@ def check_email_account():
 
 @api_bp.post('/register')
 def add_email():
-# Get form data
+    '''
+    register a new user or email session'''
     username = request.form.get('user')
     key = request.form.get('key')
     server = request.form.get('server')
-    print(username + ", " + key + ", " + server)
+    # print(username + ", " + key + ", " + server)
 
     result = _email_login(user=username, key=key, server=server)
     if result == EMAIL_CONST.IMAP_CONN_FAIL:
@@ -68,11 +90,34 @@ def get_email(eid: int):
         abort(404)
     return jsonify(email)
 
+@api_bp.post("/emails/update")
+def emails_update():
+    """
+    Move new emails from IMAP into the database using existing helper.
+    """
+    username = session.get('email_user')
+    server   = session.get('email_server')
+    if not username and not server:
+        return jsonify({"ok": False, "msg": "No logged in email user"}), 401
+
+    try:
+        _email_move_to_database(username, server)
+    except Exception as exc:
+        return jsonify({"ok": False, "msg": "Failed to update emails"}), 500
+
+    return jsonify({"ok": True, "msg": "Emails updated successfully"})
+
 @api_bp.get("/categories")
 def categories_list():
-    """Return all categories from .env as JSON."""
+    """Return all categories as JSON."""
     username = session.get('email_user')
-    return jsonify(load_categories(user=username))
+    if not username:
+        return jsonify({"ok": False, "msg": "No logged in email user"}), 401
+
+    categories = load_categories(user=username)
+    # Expecting load_categories to return a list[dict]
+    return jsonify({"ok": True, "categories": categories})
+
 
 @api_bp.post("/categories")
 def categories_upsert():
@@ -80,74 +125,82 @@ def categories_upsert():
     Create/update a category.
     Accepts JSON or form-encoded fields:
       name (str, required)
-      emails (list[str] OR comma-separated str)
-      domains (list[str] OR comma-separated str)
-      shared (bool OR 'on'/'true'/'1')
+      emails/domains (list[str] OR comma-separated str)
       days_until_delete (int)
     """
-    data = request.get_json(silent=True) or request.form.to_dict(flat=True) or {}
+    username = session.get("email_user")
+    if not username:
+        return jsonify({"ok": False, "msg": "No logged in email user"}), 401
 
-    name = data.get("name", "").strip()
+    data = request.get_json(silent=True) or request.form
+    name = (data.get("name") or "").strip()
     if not name:
-        return jsonify({"ok": False, "error": "name is required"}), 400
+        return jsonify({"ok": False, "msg": "Category name is required"}), 400
 
-    # allow list or comma-separated strings
-    def coerce_list(v):
-        if isinstance(v, list): 
-            return v
-        if isinstance(v, str):
-            return [x.strip() for x in v.split(",") if x.strip()]
-        return []
+    # emails/domains can come in a few shapes
+    raw_emails = (
+        data.get("emails")
+        or data.get("domains")
+        or data.get("emails_domains")
+    )
 
-    emails  = coerce_list(data.get("emails", []))
-    domains = coerce_list(data.get("domains", []))
-
-    # accept bools/ints
-    shared_raw = data.get("shared", False)
-    if isinstance(shared_raw, str):
-        shared = shared_raw.lower() in ("true", "1")
+    if isinstance(raw_emails, str):
+        emails = [e.strip() for e in raw_emails.split(",") if e.strip()]
+    elif isinstance(raw_emails, list):
+        emails = [str(e).strip() for e in raw_emails if str(e).strip()]
     else:
-        shared = bool(shared_raw)
+        emails = []
 
+    days = data.get("days_until_delete", None)
     try:
-        days = int(data.get("days_until_delete", 0))
-    except Exception:
-        return jsonify({"ok": False, "error": "days_until_delete must be int"}), 400
+        days_until_delete = int(days) if days not in (None, "",) else None
+    except ValueError:
+        return jsonify({"ok": False, "msg": "days_until_delete must be an integer"}), 400
 
-    cats = load_categories()
+    # Load existing categories from PG
+    categories = load_categories(user=username) or []
 
-    # Upsert by exact name
-    replaced = False
-    for i, c in enumerate(cats):
-        if c.get("name") == name:
-            cats[i] = {
-                "name": name,
-                "emails": emails,
-                "domains": domains,
-                "shared": shared,
-                "days_until_delete": days,
-            }
-            replaced = True
+    # Upsert logic
+    updated = False
+    for cat in categories:
+        if cat.get("name") == name:
+            cat["emails"] = emails
+            cat["days_until_delete"] = days_until_delete
+            updated = True
             break
 
-    if not replaced:
-        cats.api_bpend({
+    if not updated:
+        categories.append({
             "name": name,
             "emails": emails,
-            "domains": domains,
-            "shared": shared,
-            "days_until_delete": days,
+            "days_until_delete": days_until_delete
         })
 
-    save_categories(cats)
-    return jsonify({"ok": True})
+    # Save back to PG
+    save_categories(user=username, categories=categories)
+
+    return jsonify({
+        "ok": True,
+        "category": {
+            "name": name,
+            "emails": emails,
+            "days_until_delete": days_until_delete
+        }
+    })
 
 @api_bp.delete("/categories/<name>")
 def categories_delete(name):
     """Delete a category by exact name."""
-    cats = load_categories()
-    new_cats = [c for c in cats if c.get("name") != name]
-    deleted = (len(new_cats) != len(cats))
-    if deleted:
-        save_categories(new_cats)
-    return jsonify({"deleted": deleted})
+    username = session.get("email_user")
+    if not username:
+        return jsonify({"ok": False, "msg": "No logged in email user"}), 401
+
+    name = name.strip()
+    categories = load_categories(user=username) or []
+    new_categories = [c for c in categories if c.get("name") != name]
+
+    if len(new_categories) == len(categories):
+        return jsonify({"ok": False, "msg": "Category not found"}), 404
+
+    save_categories(user=username, categories=new_categories)
+    return jsonify({"ok": True})

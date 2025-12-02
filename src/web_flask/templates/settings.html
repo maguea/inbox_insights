@@ -7,32 +7,17 @@
     <h1>Email Settings</h1>
     <p class="text-muted">
         {% if user %}
-        Manage your email account connection
+        Manage your email account connection and cleanup rules.
         {% else %}
-        Set up your email account
+        Set up your email account and cleanup rules.
         {% endif %}
     </p>
 </div>
 
-{% if user %}
-<div class="alert alert-warning alert-dismissible fade show" role="alert">
-    <strong>Current Status:</strong>
-    <span id="connectionStatus">
-        <span class="spinner-border spinner-border-sm" role="status"></span> Checking connection...
-    </span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-{% endif %}
-
+<!-- Global alerts -->
 <div id="successAlert" class="alert alert-success alert-dismissible fade show d-none" role="alert">
     <strong>Success!</strong>
-    <span id="successMessage">
-        {% if user %}
-        Email credentials updated and connection verified!
-        {% else %}
-        Email account set up successfully!
-        {% endif %}
-    </span>
+    <span id="successMessage"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 
@@ -41,157 +26,442 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 
-<div class="card">
+<!-- EMAIL ACCOUNT CARD -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Email Account</h5>
+        <span id="connectionBadge" class="badge bg-secondary">Checking</span>
+    </div>
     <div class="card-body">
-        <form id="emailForm">
-            <div class="mb-3">
-                <label for="user" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="user" name="user"
-                    placeholder="{% if user %}{{ user }}{% else %}mail@example.com{% endif %}"
-                    value="{% if user %}{{ user }}{% endif %}" required>
-                <div class="form-text">Your full email address</div>
-            </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 25%;">Username</th>
+                        <th style="width: 20%;">Password</th>
+                        <th style="width: 25%;">App Key</th>
+                        <th style="width: 15%;">Server</th>
+                        <th style="width: 15%;" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <!-- Username -->
+                        <td>
+                            <input type="email" class="form-control" id="user" name="user"
+                                placeholder="mail@example.com" value="{% if user %}{{ user }}{% endif %}" {% if user
+                                %}readonly{% endif %}>
+                            <div class="form-text">Stored account email</div>
+                        </td>
 
-            <div class="mb-3">
-                <label for="key" class="form-label">
-                    App Password / Key
-                </label>
-                <input type="password" class="form-control" id="key" name="key"
-                    placeholder="Your email app password or API key" required>
-                <div class="form-text">
-                    Use your email provider's app password or generated key (not your normal login password).
-                </div>
-            </div>
+                        <!-- Password (display-only / not used) -->
+                        <td>
+                            <input type="password" class="form-control" id="password" name="password"
+                                placeholder="••••••••">
+                            <div class="form-text">Local password (if you use one).</div>
+                        </td>
 
-            <div class="mb-3">
-                <label class="form-label">IMAP Server</label>
-                <div class="btn-group" role="group" aria-label="IMAP Server selection">
-                    {# derive domain from the email string if present #}
-                    {% if user %}
-                    {% set domain = user.split('@')[-1] %}
-                    {% else %}
-                    {% set domain = '' %}
-                    {% endif %}
+                        <!-- App Key -->
+                        <td>
+                            <input type="password" class="form-control" id="appKey" name="key"
+                                placeholder="Email app password/key">
+                            <div class="form-text">
+                                Updating this will save credentials and verify login.
+                            </div>
+                        </td>
 
-                    <input type="radio" class="btn-check" name="server" id="gmail" value="imap.gmail.com" {# default to
-                        Gmail if no user yet or if email looks like a Gmail address #} {% if not user or 'gmail.com' in
-                        domain %} checked {% endif %}>
-                    <label class="btn btn-outline-primary" for="gmail">Gmail</label>
+                        <!-- Server -->
+                        <td>
+                            {% if user %}
+                            {% set domain = user.split('@')[-1] %}
+                            {% else %}
+                            {% set domain = '' %}
+                            {% endif %}
+                            <select id="server" name="server" class="form-select">
+                                <option value="imap.gmail.com" {% if not user or 'gmail.com' in domain %}selected{%
+                                    endif %}>
+                                    Gmail
+                                </option>
+                                <option value="outlook.office365.com" {% if 'outlook.com' in domain or 'hotmail.com' in
+                                    domain or 'live.com' in domain or 'office365.com' in domain %} selected {% endif %}>
+                                    Outlook
+                                </option>
+                            </select>
+                        </td>
 
-                    <input type="radio" class="btn-check" name="server" id="outlook" value="outlook.office365.com" {#
-                        default to Outlook if email domain looks like an Outlook/Microsoft one #} {% if 'outlook.com' in
-                        domain or 'hotmail.com' in domain or 'live.com' in domain or 'office365.com' in domain %}
-                        checked {% endif %}>
-                    <label class="btn btn-outline-primary" for="outlook">Outlook</label>
-                </div>
-                <div class="form-text mt-2">Select your email provider</div>
-            </div>
+                        <!-- Actions -->
+                        <td class="text-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVerify">
+                                    Verify Login
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnSaveKey">
+                                    Save App Key
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm" id="btnUpdateEmails">
+                                    Update Emails
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    {% if user %}
-                    Update Email
-                    {% else %}
-                    Save & Connect
-                    {% endif %}
-                </button>
-            </div>
-        </form>
+        <small class="text-muted d-block mt-2">
+            “Verify Login” only checks your credentials. “Save App Key” saves and verifies.
+            “Update Emails” pulls new messages into the database.
+        </small>
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0">Connection Help</h5>
+<!-- CATEGORIES CARD -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Categories</h5>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddCategory">
+            Add Category
+        </button>
     </div>
     <div class="card-body">
-        <h6>App Passwords:</h6>
-        <p class="mb-0">
-            For Gmail and other services, you may need to generate an App Password instead of using your regular
-            password.
-        </p>
+        <div class="table-responsive mb-2">
+            <table class="table align-middle" id="categoriesTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 20%;">Name</th>
+                        <th style="width: 45%;">Emails / Domains</th>
+                        <th style="width: 15%;">Delete After (days)</th>
+                        <th style="width: 20%;" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesBody">
+                    <!-- Populated by JS via /categories -->
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted">
+            Separate multiple emails/domains with commas. “Delete After” controls how long to keep messages
+            in this category before deletion.
+        </small>
     </div>
 </div>
 
 <script>
-    document.getElementById('emailForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
+    (function () {
+        const successAlert = document.getElementById('successAlert');
+        const successMessage = document.getElementById('successMessage');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const connectionBadge = document.getElementById('connectionBadge');
 
-        const submitBtn = document.getElementById('submitBtn');
-        const originalText = submitBtn.innerHTML;
+        function showSuccess(msg) {
+            successMessage.textContent = msg || 'Operation successful.';
+            successAlert.classList.remove('d-none');
+            errorAlert.classList.add('d-none');
+        }
 
-        document.getElementById('successAlert').classList.add('d-none');
-        document.getElementById('errorAlert').classList.add('d-none');
+        function showError(msg) {
+            errorMessage.textContent = msg || 'Something went wrong.';
+            errorAlert.classList.remove('d-none');
+            successAlert.classList.add('d-none');
+        }
 
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Testing Connection...';
-        submitBtn.disabled = true;
+        // NEW: explicit "checking" state with spinner
+        function setConnectionChecking() {
+            connectionBadge.className = 'badge bg-secondary';
+            connectionBadge.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Checking';
+        }
 
-        try {
-            const formData = new FormData(this);
-
-            const response = await fetch('{{ url_for("api.add_email") }}', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.ok) {
-                document.getElementById('successMessage').textContent =
-                    result.msg || 'Email settings saved successfully!';
-                document.getElementById('successAlert').classList.remove('d-none');
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+        // UPDATED: use msg if provided; red/green colors
+        function setConnectionStatus(ok, msg) {
+            if (ok) {
+                connectionBadge.className = 'badge bg-success';
+                connectionBadge.textContent = msg || 'Connected';
             } else {
-                document.getElementById('errorMessage').textContent =
-                    result.msg || 'An error occurred while saving settings';
-                document.getElementById('errorAlert').classList.remove('d-none');
+                connectionBadge.className = 'badge bg-danger';
+                connectionBadge.textContent = msg || 'Not connected';
+            }
+        }
+
+        // --- LOGIN ACTIONS ---
+
+        const btnVerify = document.getElementById('btnVerify');
+        const btnSaveKey = document.getElementById('btnSaveKey');
+        const btnUpdateEmails = document.getElementById('btnUpdateEmails');
+
+        function getLoginPayload() {
+            return {
+                user: document.getElementById('user').value.trim(),
+                pass: document.getElementById('appKey').value.trim(),  // used only for save
+                server: document.getElementById('server').value
+            };
+        }
+
+        btnVerify.addEventListener('click', async () => {
+            const payload = getLoginPayload();
+            if (!payload.user) {
+                showError('Username is required to verify login.');
+                setConnectionStatus(false, 'Not connected');
+                return;
             }
 
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('errorMessage').textContent = 'Network error: Unable to connect to server';
-            document.getElementById('errorAlert').classList.remove('d-none');
-        } finally {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }
-    });
+            // show "checking" spinner while we call the server
+            setConnectionChecking();
 
-    document.addEventListener('DOMContentLoaded', function () {
-        {% if user %}
-        const statusElement = document.getElementById('connectionStatus');
-
-        fetch('{{ url_for("api.check_email_account") }}', {
-            method: 'GET'
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Current email status:', data);
-
-                const alertElement = statusElement.closest('.alert');
-
-                if (data.ok) {
-                    statusElement.innerHTML = data.msg || 'Connected';
-                    alertElement.classList.remove('alert-warning', 'alert-danger');
-                    alertElement.classList.add('alert-success');
+            try {
+                const resp = await fetch('{{ url_for("api.check_email_account") }}', {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    showSuccess(data.msg || 'Login verified successfully.');
+                    setConnectionStatus(true, data.msg || 'Connected');
                 } else {
-                    statusElement.innerHTML = data.msg || 'Not connected';
-                    alertElement.classList.remove('alert-warning', 'alert-success');
-                    alertElement.classList.add('alert-danger');
+                    showError(data.msg || 'Login verification failed.');
+                    setConnectionStatus(false, data.msg || 'Not connected');
                 }
-            })
-            .catch(error => {
-                console.error('Error checking email status:', error);
-                statusElement.innerHTML = 'Error checking connection status';
-                const alertElement = statusElement.closest('.alert');
-                alertElement.classList.remove('alert-warning', 'alert-success');
-                alertElement.classList.add('alert-danger');
-            });
-        {% endif %}
-    });
+            } catch (err) {
+                console.error(err);
+                showError('Network error while verifying login.');
+                setConnectionStatus(false, 'Not connected');
+            }
+        });
+
+        btnSaveKey.addEventListener('click', async () => {
+            const payload = getLoginPayload();
+            if (!payload.user || !payload.pass) {
+                showError('Username and app key are required to save.');
+                return;
+            }
+            try {
+                const resp = await fetch('{{ url_for("api.add_email") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        user: payload.user,
+                        password: payload.pass,
+                        server: payload.server
+                    })
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    showSuccess(data.msg || 'App key saved and login verified.');
+                    setConnectionStatus(true, data.msg || 'Connected');
+                } else {
+                    showError(data.msg || 'Failed to save app key.');
+                    setConnectionStatus(false, data.msg || 'Not connected');
+                }
+            } catch (err) {
+                console.error(err);
+                showError('Network error while saving app key.');
+                setConnectionStatus(false, 'Not connected');
+            }
+        });
+
+        btnUpdateEmails.addEventListener('click', async () => {
+            const server = document.getElementById('server').value;
+            try {
+                const resp = await fetch('{{ url_for("api.emails_update") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server })
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    showSuccess(data.msg || 'Emails updated successfully.');
+                } else {
+                    showError(data.msg || 'Failed to update emails.');
+                }
+            } catch (err) {
+                console.error(err);
+                showError('Network error while updating emails.');
+            }
+        });
+
+        // Initial connection check on page load
+        document.addEventListener('DOMContentLoaded', async function () {
+            // show spinner immediately
+            setConnectionChecking();
+
+            try {
+                const resp = await fetch('{{ url_for("api.check_email_account") }}', {
+                    method: 'GET'
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    setConnectionStatus(true, data.msg || 'Connected');
+                } else {
+                    // show error and red badge with message
+                    if (data && data.msg) {
+                        showError(data.msg);
+                    }
+                    setConnectionStatus(false, data.msg || 'Not connected');
+                }
+            } catch (e) {
+                console.error(e);
+                showError('Network error while checking connection.');
+                setConnectionStatus(false, 'Not connected');
+            }
+        });
+
+        // --- CATEGORIES UI / LOGIC ---
+
+        const categoriesBody = document.getElementById('categoriesBody');
+        const btnAddCategory = document.getElementById('btnAddCategory');
+
+        function renderCategoryRow(cat) {
+            const tr = document.createElement('tr');
+            tr.dataset.name = cat.name || '';
+
+            tr.innerHTML = `
+            <td>
+                <input type="text" class="form-control category-name" value="${cat.name || ''}" ${cat.name ? 'readonly' : ''}>
+            </td>
+            <td>
+                <textarea class="form-control category-emails" rows="2"
+                    placeholder="user@example.com, @domain.com">${(cat.emails || []).join(', ')}</textarea>
+            </td>
+            <td>
+                <input type="number" min="0" class="form-control category-days"
+                       value="${cat.days_until_delete != null ? cat.days_until_delete : ''}"
+                       placeholder="e.g., 30">
+            </td>
+            <td class="text-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-save-category">
+                        Save
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-category">
+                        Delete
+                    </button>
+                </div>
+            </td>
+        `;
+            return tr;
+        }
+
+        async function loadCategories() {
+            categoriesBody.innerHTML = `
+            <tr><td colspan="4" class="text-center text-muted py-3">
+                Loading categories...
+            </td></tr>
+        `;
+            try {
+                const resp = await fetch('{{ url_for("api.categories_list") }}');
+                const data = await resp.json();
+                if (!resp.ok || !data.ok) {
+                    throw new Error(data.msg || 'Failed to load categories');
+                }
+                const categories = data.categories || [];
+                categoriesBody.innerHTML = '';
+                if (!categories.length) {
+                    categoriesBody.innerHTML = `
+                    <tr><td colspan="4" class="text-center text-muted py-3">
+                        No categories yet. Click "Add Category" to create one.
+                    </td></tr>
+                `;
+                } else {
+                    categories.forEach(cat => {
+                        categoriesBody.appendChild(renderCategoryRow(cat));
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                categoriesBody.innerHTML = `
+                <tr><td colspan="4" class="text-center text-danger py-3">
+                    Failed to load categories.
+                </td></tr>
+            `;
+            }
+        }
+
+        btnAddCategory.addEventListener('click', () => {
+            const tr = renderCategoryRow({ name: '', emails: [], days_until_delete: '' });
+            categoriesBody.prepend(tr);
+        });
+
+        // Event delegation for Save/Delete buttons
+        categoriesBody.addEventListener('click', async (e) => {
+            const target = e.target;
+            const row = target.closest('tr');
+            if (!row) return;
+
+            if (target.classList.contains('btn-save-category')) {
+                const nameInput = row.querySelector('.category-name');
+                const emailsInput = row.querySelector('.category-emails');
+                const daysInput = row.querySelector('.category-days');
+
+                const name = nameInput.value.trim();
+                const emails = emailsInput.value.split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                const days = daysInput.value.trim();
+
+                if (!name) {
+                    showError('Category name is required.');
+                    return;
+                }
+
+                try {
+                    const resp = await fetch('{{ url_for("api.categories_upsert") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            emails,
+                            days_until_delete: days || null
+                        })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok && data.ok) {
+                        showSuccess('Category saved.');
+                        // Re-render from server so we have consistent state
+                        loadCategories();
+                    } else {
+                        showError(data.msg || 'Failed to save category.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showError('Network error while saving category.');
+                }
+            }
+
+            if (target.classList.contains('btn-delete-category')) {
+                const nameInput = row.querySelector('.category-name');
+                const name = (nameInput.value || '').trim();
+                if (!name) {
+                    // If it's a brand new unsaved row, just remove it
+                    row.remove();
+                    return;
+                }
+                if (!confirm(`Delete category "${name}"? This cannot be undone.`)) {
+                    return;
+                }
+                try {
+                    const resp = await fetch(
+                        '{{ url_for("api.categories_delete", name="__NAME__") }}'.replace('__NAME__', encodeURIComponent(name)),
+                        { method: 'DELETE' }
+                    );
+                    const data = await resp.json();
+                    if (resp.ok && data.ok) {
+                        showSuccess('Category deleted.');
+                        row.remove();
+                        if (!categoriesBody.children.length) {
+                            loadCategories();
+                        }
+                    } else {
+                        showError(data.msg || 'Failed to delete category.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showError('Network error while deleting category.');
+                }
+            }
+        });
+
+        // Initial categories load
+        loadCategories();
+    })();
 </script>
 {% endblock %}

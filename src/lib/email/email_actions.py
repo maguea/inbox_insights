@@ -76,7 +76,7 @@ def _email_get_by_page(user, page, per_page=50):
             "subject": r[3]["subject"],
             "preview": r[3]["preview"]
         }
-        print(email)
+        # print(email)
         emails.append(email)
     return emails
 
