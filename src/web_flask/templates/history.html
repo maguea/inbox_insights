@@ -74,15 +74,15 @@
                         <iframe id="emailBodyFrame" class="email-body-frame w-100 border-0"
                                 sandbox="allow-same-origin"></iframe>
                     </div>
-
                 </article>
             </main>
 
         </div>
     </div>
 </div>
+
 <style>
-    /* Outer box */
+    /* Outer box for the email body */
     .email-body {
         height: 60vh;
         max-height: 800px;
@@ -100,10 +100,12 @@
 
 {% block scripts %}
 {{ super() }}
+
+<!-- Existing history logic -->
 <script src="{{ url_for('static', filename='js/history.js') }}" defer></script>
 
+<!-- Auto-select email when ?email_id=<id> is present -->
 <script>
-    // When arriving with ?email_id=<id>, auto-select that email in the list
     document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const selectedId = params.get('email_id') || params.get('eid') || params.get('selected');
@@ -141,6 +143,45 @@
             }
         });
         observer.observe(listEl, { childList: true, subtree: true });
+    });
+</script>
+
+<!-- In dark mode, force the iframe contents to use light-mode colors -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const iframe = document.getElementById('emailBodyFrame');
+        if (!iframe) return;
+
+        iframe.addEventListener('load', () => {
+            // Only adjust when the site is in dark mode
+            const isDark = document.body.classList.contains('dark-mode');
+            if (!isDark) return;
+
+            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!doc) return;
+
+            const css = `
+                html, body {
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                }
+                body, p, td, span, div {
+                    color: #111827 !important;
+                }
+                a {
+                    color: #1d4ed8 !important;
+                }
+            `;
+
+            const styleEl = doc.createElement('style');
+            styleEl.textContent = css;
+
+            if (doc.head) {
+                doc.head.appendChild(styleEl);
+            } else if (doc.documentElement) {
+                doc.documentElement.insertBefore(styleEl, doc.documentElement.firstChild);
+            }
+        });
     });
 </script>
 {% endblock %}

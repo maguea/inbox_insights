@@ -1,4 +1,3 @@
-{# Dashboard #}
 {% extends "base.html" %}
 
 {% block title %}Dashboard{% endblock %}
@@ -15,51 +14,88 @@
     <div class="alert alert-info">
         No categories or emails found yet. Use the <strong>Settings</strong> page to add categories and update emails.
     </div>
-{% endif %}
-
+{% else %}
 <div class="row g-4">
     {% for section in sections %}
     <div class="col-md-6 col-lg-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm dashboard-card"
+             style="border-top: 4px solid {{ section.color or '#0d6efd' }};">
 
             <!-- Category label -->
-            <div class="card-header bg-white border-0 pb-0">
+            <div class="card-header border-0 pb-0">
                 <span class="text-uppercase text-muted small fw-semibold">
                     {{ section.display_name or section.category }}
                 </span>
             </div>
 
-            <div class="card-body">
-                {% if section.emails|length == 0 %}
-                    <p class="text-muted small mb-0">No emails in this category yet.</p>
-                {% else %}
-                    {% for email in section.emails %}
-                    <div class="mb-3 {% if not loop.last %}border-bottom pb-2{% endif %}">
-                        <a class="text-decoration-none text-reset"
-                           href="{{ url_for('view_all_emails') }}?email_id={{ email.id }}">
-                            <div class="fw-semibold text-truncate">
-                                {{ email.subject or "No subject" }}
-                            </div>
-                            <div class="small text-muted">
-                                {{ email.sender_name or email.sender_addr }}
-                                {% if email.collected_date %}
-                                    · {{ email.collected_date.strftime('%b %d, %Y') }}
+            <!-- Scrollable email list -->
+            <div class="card-body p-0">
+                <div class="email-scroll-box">
+                    {% if section.emails|length == 0 %}
+                        <p class="text-muted small mb-0 px-3 pt-3 pb-2">
+                            No emails in this category yet.
+                        </p>
+                    {% else %}
+                        {% for email in section.emails %}
+                        <div
+                            class="mb-3 px-3 {% if not loop.last %}border-bottom pb-2{% else %}pb-2{% endif %} dash-email-item"
+                            data-email-id="{{ email.id }}"
+                            data-subject="{{ (email.subject or 'No subject')|e }}"
+                            data-sender="{{ (email.sender_name or email.sender_addr or '')|e }}"
+                            data-date="{{ (email.collected_date or '')|e }}"
+                        >
+                            <a class="text-decoration-none text-reset d-block"
+                               href="{{ url_for('view_all_emails') }}?email_id={{ email.id }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="me-2">
+                                        <div class="fw-semibold email-subject">
+                                            {{ email.subject or "No subject" }}
+                                        </div>
+                                        <div class="small text-muted email-sender">
+                                            {{ email.sender_name or email.sender_addr }}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-end small">
+                                        {% if email.collected_date %}
+                                            <div class="text-muted">
+                                                {{ email.collected_date }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if loop.first %}
+                                            {% if email.is_unread %}
+                                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle">
+                                                    Unread
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if email.is_unread %}
+                                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                                    Unread
+                                                </span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if email.preview %}
+                                <div class="small text-muted email-preview mt-1">
+                                    {{ email.preview }}
+                                </div>
                                 {% endif %}
-                            </div>
-                            {% if email.preview %}
-                            <div class="small text-muted text-truncate mt-1">
-                                {{ email.preview }}
-                            </div>
-                            {% endif %}
-                        </a>
-                    </div>
-                    {% endfor %}
-                {% endif %}
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
             </div>
+
         </div>
     </div>
     {% endfor %}
 </div>
+{% endif %}
 
 <style>
     .text-truncate {
@@ -67,5 +103,356 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    /* allow multi-line subject/preview without hard cropping */
+    .email-subject {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;         /* up to 2 lines */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .email-sender {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .email-preview {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;         /* up to 2 lines of preview */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+.email-scroll-box {
+        max-height: 280px;
+        overflow-y: auto;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        scrollbar-width: none; /* Firefox hide scrollbar */
+    }
+
+    .email-scroll-box::-webkit-scrollbar {
+        width: 0px;   /* Chrome/Safari/Edge hide scrollbar */
+        height: 0px;
+        display: none;
+    }
+
+    .hover-preview {
+        position: fixed;
+        z-index: 1050;
+        min-width: 360px;
+        max-width: 640px;
+        max-height: 80vh;
+        overflow: hidden;
+        background-color: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        pointer-events: none;
+        display: none;
+    }
+
+    .hover-preview.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    .hover-preview-header {
+        padding: 0.4rem 0.7rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+        font-size: 0.78rem;
+        background: linear-gradient(to right, #f8fafc, #e5e7eb);
+    }
+
+    .hover-preview-header-subject {
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.15rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .hover-preview-header-meta {
+        font-size: 0.72rem;
+        color: #6b7280;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .hover-preview-frame-wrap {
+        position: relative;
+        background-color: #f3f4f6;
+    }
+
+    .hover-preview-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #ffffff;
+    }
+
+    body.dark-mode .hover-preview {
+        background-color: #020617;
+        border: 1px solid #1e293b;
+    }
+
+    body.dark-mode .hover-preview-frame {
+        background-color: #020617;
+    }
+
+    body.dark-mode .hover-preview-header-meta {
+        color: #9ca3af;
+    }
 </style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  (function () {
+    const items = document.querySelectorAll('.dash-email-item');
+    if (!items.length) return;
+
+    // Create a single floating preview element and reuse it
+    const preview = document.createElement('div');
+    preview.className = 'hover-preview';
+    preview.innerHTML = `
+      <div class="hover-preview-header">
+        <div class="hover-preview-header-subject" data-role="subject"></div>
+        <div class="hover-preview-header-meta">
+          <span data-role="sender"></span>
+          <span data-role="date"></span>
+        </div>
+      </div>
+      <div class="hover-preview-frame-wrap">
+        <iframe class="hover-preview-frame" data-role="frame"></iframe>
+      </div>
+    `;
+    document.body.appendChild(preview);
+
+    const subjectEl = preview.querySelector('[data-role="subject"]');
+    const senderEl  = preview.querySelector('[data-role="sender"]');
+    const dateEl    = preview.querySelector('[data-role="date"]');
+    const frame     = preview.querySelector('[data-role="frame"]');
+
+    let hoverTimeout = null;
+    let hideTimeout = null;
+    let activeItem = null;
+
+    const bodyCache = {}; // email_id -> { html, text }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function buildFallbackHtml(previewText) {
+      const text = escapeHtml(previewText || '(no preview)');
+      return `
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              html, body {
+                margin: 0;
+                padding: 0.75rem;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                font-size: 14px;
+                line-height: 1.4;
+                background: #ffffff;
+                color: #111827;
+              }
+              a { color: #1d4ed8; }
+              body.dark-mode & {
+                background: #020617;
+                color: #e5e7eb;
+              }
+            </style>
+          </head>
+          <body>${text}</body>
+        </html>
+      `;
+    }
+
+    async function getEmailDetail(id, fallbackData) {
+      if (bodyCache[id]) return bodyCache[id];
+
+      try {
+        const res = await fetch(`/api/emails/${id}`);
+        if (!res.ok) throw new Error('detail ' + res.status);
+        const email = await res.json();
+
+        const htmlBody = email.data?.data || '';
+        const subject = email.data?.subject || fallbackData.subject || '(no subject)';
+        const senderName = email.sender?.sender_name || '';
+        const senderAddr = email.sender?.sender_addr || '';
+        const sender = senderAddr
+          ? (senderName ? `${senderName} <${senderAddr}>` : senderAddr)
+          : (senderName || '');
+
+        const collectedDate = email.collected_date || fallbackData.date || '';
+
+        const result = {
+          htmlBody,
+          subject,
+          sender,
+          collectedDate,
+        };
+
+        bodyCache[id] = result;
+        return result;
+      } catch (err) {
+        console.error(err);
+        return {
+          htmlBody: '',
+          subject: fallbackData.subject || '(no subject)',
+          sender: fallbackData.sender || '',
+          collectedDate: fallbackData.date || '',
+        };
+      }
+    }
+
+    function positionPreview(item) {
+      const rect = item.getBoundingClientRect();
+      let left = rect.right + 16;
+      let top = rect.top + window.scrollY;
+
+      preview.style.left = left + 'px';
+      preview.style.top = top + 'px';
+      preview.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        const pRect = preview.getBoundingClientRect();
+
+        // If preview goes off right edge, show it on the left side of the card
+        if (pRect.right > window.innerWidth - 8) {
+          left = rect.left - pRect.width - 16;
+          preview.style.left = left + 'px';
+        }
+
+        // Keep within vertical bounds
+        if (pRect.top < 8) {
+          top = window.scrollY + 8;
+        } else if (pRect.bottom > window.innerHeight - 8) {
+          top = window.scrollY + window.innerHeight - pRect.height - 8;
+        }
+        preview.style.top = top + 'px';
+
+        preview.classList.add('visible');
+      });
+    }
+
+    function showPreview(item) {
+      if (!item) return;
+      activeItem = item;
+
+      const fallbackPreviewEl = item.querySelector('.email-preview');
+      const previewText = fallbackPreviewEl ? fallbackPreviewEl.textContent.trim() : '';
+
+      const data = {
+        id: item.dataset.emailId,
+        subject: item.dataset.subject || '(no subject)',
+        sender: item.dataset.sender || '',
+        date: item.dataset.date || '',
+        previewText,
+      };
+
+      subjectEl.textContent = data.subject;
+      senderEl.textContent = data.sender;
+      dateEl.textContent = data.date;
+
+      // First, show fallback text immediately
+      const doc = frame.contentDocument || frame.contentWindow.document;
+      doc.open();
+      doc.write(buildFallbackHtml(data.previewText));
+      doc.close();
+
+      positionPreview(item);
+
+      // Then fetch full HTML from backend, if available
+      getEmailDetail(data.id, data).then(detail => {
+        if (!detail) return;
+        if (activeItem !== item) return;
+
+        subjectEl.textContent = detail.subject;
+        senderEl.textContent = detail.sender;
+        dateEl.textContent = detail.collectedDate || data.date;
+
+        const doc2 = frame.contentDocument || frame.contentWindow.document;
+        doc2.open();
+        doc2.write(`
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  background: #ffffff;
+                }
+                body, p, td, span, div {
+                  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                  font-size: 14px;
+                  color: #111827;
+                }
+                a {
+                  color: #1d4ed8;
+                }
+                body.dark-mode & {
+                  background: #020617;
+                  color: #e5e7eb;
+                }
+              </style>
+            </head>
+            <body>${detail.htmlBody || buildFallbackHtml(data.previewText)}</body>
+          </html>
+        `);
+        doc2.close();
+      }).catch(err => console.error(err));
+    }
+
+    function hidePreview() {
+      preview.classList.remove('visible');
+      preview.style.display = 'none';
+      activeItem = null;
+    }
+
+    items.forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        clearTimeout(hideTimeout);
+        clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+          showPreview(item);
+        }, 350);
+      });
+
+      item.addEventListener('mouseleave', () => {
+        clearTimeout(hoverTimeout);
+        hideTimeout = setTimeout(hidePreview, 250);
+      });
+    });
+
+    preview.addEventListener('mouseenter', () => {
+      clearTimeout(hideTimeout);
+    });
+
+    preview.addEventListener('mouseleave', () => {
+      hideTimeout = setTimeout(hidePreview, 200);
+    });
+
+    window.addEventListener('scroll', () => {
+      hidePreview();
+    });
+  })();
+</script>
 {% endblock %}
