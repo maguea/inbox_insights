@@ -15,13 +15,15 @@ def check_user_account():
     username = request.form.get('user')
     password = request.form.get('pass')
     server = request.form.get('server')
-    if not username or not password or not server:
-        return jsonify({'ok': False, 'msg': 'missing credentials'}), 400
+    if not password:
+        password = ""
 
     res = _user_login(username, password)
     if res == EMAIL_CONST.IMAP_CONN_FAIL:
         return jsonify({'ok': False, 'msg': 'invalid credentials'}), 401
 
+    session['email_user'] = username
+    session['email_server'] = server
     return jsonify({'ok': True, 'msg': 'user exists'})
 
 

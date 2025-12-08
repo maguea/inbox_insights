@@ -21,7 +21,6 @@ app.secret_key = secret_key
 app.register_blueprint(api_bp)
 app.register_blueprint(bp_login)
 
-
 @app.route('/')
 def index():
     username = session.get('email_user')
@@ -29,7 +28,6 @@ def index():
     if not username or not server:
         return redirect(url_for('client_login'))
     return redirect(url_for('dashboard'))
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -50,7 +48,6 @@ def dashboard():
         sections=sections,
         user=username
     )
-
 
 @app.route('/config')
 def client_settings():
