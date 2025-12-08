@@ -3,7 +3,7 @@ from flask import request, session, abort, jsonify
 import json
 
 from . import api_bp
-from src.lib import EMAIL_CONST
+from src.lib import EMAIL_CONST, get_error_message
 from src.lib.email.email_actions import _email_delete, _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
 from src.lib.email.email_move2_db import _email_move_to_database
 from src.lib.account.user_categories import save_categories, load_categories
@@ -19,8 +19,8 @@ def check_user_account():
         password = ""
 
     res = _user_login(username, password)
-    if res == EMAIL_CONST.IMAP_CONN_FAIL:
-        return jsonify({'ok': False, 'msg': 'invalid credentials'}), 401
+    if res != EMAIL_CONST.LOGIN_SUCCESS:
+        return jsonify({'ok': False, 'msg': get_error_message(result_code=res)})
 
     session['email_user'] = username
     session['email_server'] = server
@@ -41,33 +41,18 @@ def check_email_account():
     return jsonify({'ok': True, 'msg': 'Connected to email server'})
 
 
-@api_bp.post('/login')
-def email_login():
-    username = request.form.get('user')
-    server = request.form.get('server')
-    key = request.form.get('key')
-
-    if not username or not server or not key:
-        return jsonify({'ok': False, 'msg': 'Missing user/server/key'}), 400
-
-    res = _email_login(username, server, key)
-    if res == EMAIL_CONST.IMAP_CONN_FAIL:
-        return jsonify({'ok': False, 'msg': 'Email login failed'}), 401
-
-    session['email_user'] = username
-    session['email_server'] = server
-    return jsonify({'ok': True, 'msg': 'Email login successful'})
-
-
 @api_bp.post('/save_key')
 def save_key():
     username = request.form.get('user')
     server = request.form.get('server')
+    password = request.form.get('password')
     key = request.form.get('key')
     if not username or not server or not key:
         return jsonify({'ok': False, 'msg': 'Missing user/server/key'}), 400
 
-    res = _email_save_key(username, server, key)
+    if not password:
+        password = ""
+    res = _email_save_key(username, password, key)
     if res == EMAIL_CONST.IMAP_CONN_FAIL:
         return jsonify({'ok': False, 'msg': 'Email login failed'}), 401
 
@@ -255,19 +240,19 @@ def add_email():
     register a new user or email session'''
     username = request.form.get('user')
     key = request.form.get('key')
-    server = request.form.get('server')
+    password = request.form.get('password')
     # print(username + ", " + key + ", " + server)
 
-    result = _email_login(user=username, key=key, server=server)
-    if result == EMAIL_CONST.IMAP_CONN_FAIL:
-        print("STATUS: failed to check IMAP to add_email()")
-        return jsonify({'ok': False, 'msg': 'IMAP connection failed'})
+    # result = _email_login(user=username, key=key, server=server)
+    # if result == EMAIL_CONST.IMAP_CONN_FAIL:
+    #     print("STATUS: failed to check IMAP to add_email()")
+    #     return jsonify({'ok': False, 'msg': 'IMAP connection failed'})
 
-    print("STATUS: IMAP connection success")
+    # print("STATUS: IMAP connection success")
 
-    _email_save_key(user=username, server=server, key=key)
+    _email_save_key(user=username, password=password, key=key)
 
-    session['email_user'] = username
-    session['email_server'] = server
+    # session['email_user'] = username
+    # session['email_server'] = server
 
     return jsonify({'ok': True})

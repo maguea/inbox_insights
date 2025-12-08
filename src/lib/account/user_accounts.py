@@ -6,8 +6,8 @@ from src.lib import DB_CONST, EMAIL_CONST
 def _user_create_account(user, password):
     'checks if account exist. stores if new'
     db = DB_Actions()
-    exist = db._get_pass(user_id=user, password=password)
-    if exist != EMAIL_CONST.LOGIN_SUCCESS: # does not exist
+    exist = db._get_pass(user_id=user)
+    if not exist: # does not exist
         print("STATUS: creating a new user")
         db._add_new_user(user_id=user, password=password)
     

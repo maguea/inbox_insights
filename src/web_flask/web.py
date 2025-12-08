@@ -26,20 +26,8 @@ def index():
     username = session.get('email_user')
     server   = session.get('email_server')
     if not username or not server:
-        return redirect(url_for('client_login'))
-    return redirect(url_for('dashboard'))
-
-@app.route('/dashboard')
-def dashboard():
-    """
-    Render the dashboard with category-grouped email previews.
-    """
-    username = session.get('email_user')
-    server   = session.get('email_server')
-
-    if not username or not server:
-        return redirect(url_for('client_login'))
-
+        return redirect(url_for('login.login_page'))
+    
     # Fetch 3 newest emails per category
     sections = _email_get_dashboard(username, per_category=3)
 
@@ -53,11 +41,6 @@ def dashboard():
 def client_settings():
     user = session.get('email_user')
     return render_template('settings.html', user=user)
-
-
-@app.route('/login')
-def client_login():
-    return render_template('login_page.html')
 
 
 @app.route('/history')

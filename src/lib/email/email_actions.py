@@ -15,7 +15,7 @@ def _to_iso(val):
         return str(val)
 
 
-def _email_login(user, server, key=None):
+def _email_login(user, server, password=None):
     """
     Checks basic connection.
         Returns:
@@ -23,59 +23,29 @@ def _email_login(user, server, key=None):
         - 3: IMAP server connection failed
     """
     db = DB_Actions()
-    if key is None:
+    if password is None:
         # get key from db. If there is a key, the login is valid
-        result = db._get_key(user, server)
+        result = db._gather_user_key(user, password)
         return result
     else:
-        result = db._email_login(user, server, key)
-        if result == EMAIL_CONST.IMAP_CONN_FAIL:
-            return EMAIL_CONST.IMAP_CONN_FAIL
-        # add key.
-        db._add_email_server(user, server, key)
+        # result = db._email_login(user, server, key)
+        # if result == EMAIL_CONST.IMAP_CONN_FAIL:
+        #     return EMAIL_CONST.IMAP_CONN_FAIL
+
         return EMAIL_CONST.IMAP_CONN_SUCCESS
 
 
-def _email_save_key(user, server, key=None):
+def _email_save_key(user, password, key):
     """
     Save email key.
     """
     db = DB_Actions()
-    result = db._email_login(user, server, key)
-    if result == EMAIL_CONST.IMAP_CONN_FAIL:
-        return EMAIL_CONST.IMAP_CONN_FAIL
-    db._add_email_server(user, server, key)
-    return EMAIL_CONST.IMAP_CONN_SUCCESS
+    result = db._add_email_key((user, password,), key)
 
 
 def _email_move_to_gmail(user, server):
     """Not implemented"""
     pass
-
-
-def _email_move_to_database(user, server):
-    """
-    Move emails from mail server to the database.
-    """
-    db = DB_Actions()
-    user_key = db._get_key(user, server)
-    if user_key == EMAIL_CONST.IMAP_CONN_FAIL:
-        return EMAIL_CONST.IMAP_CONN_FAIL
-
-    gather = Gather(user, server, user_key)
-    status = gather.gather()
-
-    if status == EMAIL_CONST.IMAP_CONN_FAIL:
-        print("STATUS: failed to check IMAP to move to db")
-        return EMAIL_CONST.IMAP_CONN_FAIL
-    elif status == EMAIL_CONST.NO_EMAILS:
-        print("STATUS: no emails to move to db")
-        return EMAIL_CONST.NO_EMAILS
-
-    emails = gather.get_emails()
-    db._add_emails(user, emails)
-
-    return EMAIL_CONST.IMAP_CONN_SUCCESS
 
 
 def _email_get_by_eid(user, email_id):

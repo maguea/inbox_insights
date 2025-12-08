@@ -24,7 +24,8 @@
                 <label for="pass" class="form-label">
                     Account Password
                 </label>
-                <input type="password" class="form-control" id="pass" name="pass" placeholder="Your account password">
+                <!-- name MUST be 'key' to match email_login() -->
+                <input type="password" class="form-control" id="pass" name="key" placeholder="Your account password">
                 <div class="form-text">
                     Use the normal password you use for this account.
                 </div>
@@ -59,7 +60,12 @@
                 <button type="submit" class="btn btn-primary" id="submitBtn">
                     Login
                 </button>
+
+                <button type="button" class="btn btn-outline-secondary" id="createBtn">
+                    Create Account
+                </button>
             </div>
+
         </form>
     </div>
 </div>
@@ -67,12 +73,21 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('emailForm');
-        const btn = document.getElementById('submitBtn');
+        const loginBtn = document.getElementById('submitBtn');
+        const createBtn = document.getElementById('createBtn');
         const title = document.getElementById('pageTitle');
         const statusMsg = document.getElementById('statusMsg');
 
+        function resetStatus() {
+            statusMsg.classList.add('d-none');
+            statusMsg.classList.remove('alert-success', 'alert-danger', 'alert-info');
+            statusMsg.textContent = '';
+        }
+
+        // ----------------- LOGIN -----------------
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            resetStatus();
 
             const formData = new FormData(form);
 
@@ -83,18 +98,13 @@
                 });
 
                 const data = await resp.json();
+                statusMsg.classList.remove('d-none');
 
-                statusMsg.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-info');
-
-                if (data.ok) {
-                    // ✅ If backend says ok: true → redirect to dashboard
-                    window.location.href = '{{ url_for("dashboard") }}';
+                if (data.ok === true) {
+                    window.location.href = '{{ url_for("index") }}';   // <── SUCCESS REDIRECT
                 } else {
-                    // ❌ Not ok: show error message
                     statusMsg.classList.add('alert', 'alert-danger');
                     statusMsg.textContent = data.msg || 'Invalid credentials. Please try again.';
-                    title.textContent = 'Login';
-                    btn.textContent = 'Login';
                 }
             } catch (err) {
                 statusMsg.classList.remove('d-none');
@@ -103,6 +113,44 @@
                 console.error(err);
             }
         });
+
+        // ----------------- CREATE ACCOUNT -----------------
+        createBtn.addEventListener('click', async () => {
+            resetStatus();
+
+            const userEl = document.getElementById('user');
+            const passEl = document.getElementById('pass');
+            const serverEl = document.querySelector('input[name="server"]:checked');
+
+            const fd = new FormData();
+            fd.append('username', (userEl.value || '').trim());
+            fd.append('password', passEl.value || '');
+            fd.append('server', serverEl ? serverEl.value : '');
+
+            try {
+                const resp = await fetch('{{ url_for("login.login_submit") }}', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                const data = await resp.json();
+                statusMsg.classList.remove('d-none');
+
+                if (data.ok === true) {
+                    window.location.href = '{{ url_for("index") }}';   // <── SUCCESS REDIRECT
+                } else {
+                    statusMsg.classList.add('alert', 'alert-danger');
+                    statusMsg.textContent = data.msg || 'Unable to create account.';
+                }
+            } catch (err) {
+                statusMsg.classList.remove('d-none');
+                statusMsg.classList.add('alert', 'alert-danger');
+                statusMsg.textContent = 'There was a problem creating your account.';
+                console.error(err);
+            }
+        });
     });
 </script>
+
+
 {% endblock %}
