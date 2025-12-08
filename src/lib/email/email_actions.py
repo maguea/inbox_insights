@@ -236,3 +236,14 @@ def _email_get_dashboard(user, per_category=3):
             })
 
     return sections
+
+def _email_delete(user, email_id):
+    """
+    Delete a single email by its ID for a given user.
+
+    :param user: user_id / email_user from session
+    :param eid:  email id (int)
+    :return: True if a row was deleted, False otherwise
+    """
+    db = DB_Actions()
+    db._delete_email(user, email_id)

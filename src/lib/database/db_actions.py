@@ -142,6 +142,16 @@ class DB_Actions:
             return 'misc'
 
 # set
+    def _delete_email(self, user, eid):
+        query = """ DELETE FROM public.email_data
+        WHERE user_id = %s AND id = %s
+        """
+        result = self.conn._set(query=query, args=(user, eid))
+        
+        if result == DB_CONST.DB_ERROR:
+            print('Unable to write data')
+
+
     def _add_email_data(self, data):
         '''
         The param data should ideally be a single tuple or 1D array

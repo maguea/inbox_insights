@@ -10,6 +10,7 @@
   const timeEl = document.getElementById('emailTime');
   const placeholder = document.getElementById('panePlaceholder');
   const detailPane = document.getElementById('paneDetail');
+  const deleteBtn = document.getElementById('deleteEmailBtn');
 
   let loading = false;
   let exhausted = false;
@@ -70,6 +71,10 @@
 
   const attachItemHandlers = (root) => {
     root.querySelectorAll('.email-item').forEach(btn => {
+      // avoid stacking multiple listeners on the same element
+      if (btn._emailClickBound) return;
+      btn._emailClickBound = true;
+
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-email-id');
         if (!id) return;
@@ -96,7 +101,6 @@
           // subject / preview / html body are nested under data
           const subject = email.data?.subject || email.subject || '(no subject)';
           const bodyHtml = email.data?.data || '';      // HTML body
-          // const preview = email.data?.preview || email.preview || '';
 
           // collected_date -> date + time
           let dateText = email.collected_date || '';
@@ -122,6 +126,11 @@
           placeholder.classList.add('d-none');
           detailPane.classList.remove('d-none');
           detailPane.focus();
+
+          // enable delete for selected email
+          if (deleteBtn) {
+            deleteBtn.disabled = false;
+          }
         } catch (err) {
           console.error(err);
         }
@@ -153,7 +162,6 @@
           <small class="text-muted">${escapeHtml(timestamp)}</small>
         </div>
         <div class="small text-muted text-truncate">${escapeHtml(email.subject || '')}</div>
-        <div class="small text-muted text-truncate">${escapeHtml(email.preview || '')}</div>
       `;
 
       // simple client-side filter on newly appended items
@@ -237,6 +245,53 @@
     filterText = (e.target.value || '').toLowerCase().trim();
     applyFilter();
   }, 150));
+
+  // DELETE handler
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!activeId) return;
+
+      if (!confirm('Delete this email permanently?')) {
+        return;
+      }
+
+      try {
+        const resp = await fetch(`/api/emails/${activeId}`, {
+          method: 'DELETE'
+        });
+
+        if (!resp.ok) {
+          alert('Failed to delete email.');
+          return;
+        }
+
+        // Remove from list
+        const item = listEl.querySelector(
+          `[data-email-id="${activeId}"]`
+        );
+        if (item) {
+          item.remove();
+        }
+
+        // Reset pane state
+        activeId = null;
+        deleteBtn.disabled = true;
+
+        detailPane.classList.add('d-none');
+        placeholder.classList.remove('d-none');
+
+        // Also clear out existing detail text to avoid stale view
+        subjectEl.textContent = '';
+        senderEl.textContent = '';
+        dateEl.textContent = '';
+        timeEl.textContent = '';
+        renderEmailBody('<p class="text-muted">(Email deleted)</p>');
+      } catch (err) {
+        console.error(err);
+        alert('Error deleting email (network).');
+      }
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
     setupObserver();

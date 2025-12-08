@@ -19,13 +19,12 @@
                             <i class="fas fa-search text-muted"></i>
                         </span>
                         <input id="emailSearch" type="text" class="form-control" placeholder="Search emails..."
-                               autocomplete="off" aria-label="Search emails">
+                            autocomplete="off" aria-label="Search emails">
                     </div>
                 </div>
 
                 <div id="emailList" class="list-group list-group-flush email-list flex-grow-1"
-                     style="max-height:70vh;overflow-y:auto;" data-next-page="1"
-                     aria-live="polite" aria-busy="false">
+                    style="max-height:70vh;overflow-y:auto;" data-next-page="1" aria-live="polite" aria-busy="false">
                     <!-- items are appended here via /history/page/<page> -->
                     <div id="loadSentinel" class="text-center py-3 small text-muted">
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -51,9 +50,11 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h3 id="emailSubject" class="h4 mb-0"></h3>
                         <div class="btn-group">
-                            <button class="btn btn-outline-secondary btn-sm" title="Delete" disabled>
+                            <button id="deleteEmailBtn" class="btn btn-outline-secondary btn-sm" title="Delete"
+                                disabled>
                                 <i class="bi bi-trash-fill"></i>
                             </button>
+
                             <button class="btn btn-outline-secondary btn-sm" title="Category" disabled>
                                 <i class="bi bi-tag-fill"></i>
                             </button>
@@ -72,7 +73,7 @@
 
                     <div id="emailBody" class="email-body mb-4">
                         <iframe id="emailBodyFrame" class="email-body-frame w-100 border-0"
-                                sandbox="allow-same-origin"></iframe>
+                            sandbox="allow-same-origin"></iframe>
                     </div>
                 </article>
             </main>

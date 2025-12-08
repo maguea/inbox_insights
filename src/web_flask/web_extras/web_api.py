@@ -4,7 +4,7 @@ import json
 
 from . import api_bp
 from src.lib import EMAIL_CONST
-from src.lib.email.email_actions import _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
+from src.lib.email.email_actions import _email_delete, _email_login, _email_save_key, _email_get_by_eid, _email_get_by_page
 from src.lib.email.email_move2_db import _email_move_to_database
 from src.lib.account.user_categories import save_categories, load_categories
 from src.lib.account.user_accounts import _user_login
@@ -235,6 +235,17 @@ def get_email(eid: int):
     # Could transform more fields if desired
     return jsonify(email)
 
+@api_bp.delete('/emails/<int:eid>')
+def remove_email(eid: int):
+    username = session.get("email_user")
+
+    if not username:
+        abort(401)  # not logged in
+
+    _email_delete(username, eid)
+
+    # Could transform more fields if desired
+    return {'ok': True}
 
 @api_bp.post('/register')
 def add_email():

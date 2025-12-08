@@ -4,212 +4,212 @@
 
 {% block page_content %}
 <div class="page-header mb-4">
-    <h1>Dashboard</h1>
-    {% if user %}
-    <p class="text-muted">Welcome back, {{ user }}.</p>
-    {% endif %}
+  <h1>Dashboard</h1>
+  {% if user %}
+  <p class="text-muted">Welcome back, {{ user }}.</p>
+  {% endif %}
 </div>
 
 {% if sections|length == 0 %}
-    <div class="alert alert-info">
-        No categories or emails found yet. Use the <strong>Settings</strong> page to add categories and update emails.
-    </div>
+<div class="alert alert-info">
+  No categories or emails found yet. Use the <strong>Settings</strong> page to add categories and update emails.
+</div>
 {% else %}
 <div class="row g-4">
-    {% for section in sections %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card h-100 shadow-sm dashboard-card"
-             style="border-top: 4px solid {{ section.color or '#0d6efd' }};">
+  {% for section in sections %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100 shadow-sm dashboard-card" style="border-top: 4px solid {{ section.color or '#0d6efd' }};">
 
-            <!-- Category label -->
-            <div class="card-header border-0 pb-0">
-                <span class="text-uppercase text-muted small fw-semibold">
-                    {{ section.display_name or section.category }}
-                </span>
-            </div>
+      <!-- Category label -->
+      <div class="card-header border-0 pb-0">
+        <span class="text-uppercase text-muted small fw-semibold">
+          {{ section.display_name or section.category }}
+        </span>
+      </div>
 
-            <!-- Scrollable email list -->
-            <div class="card-body p-0">
-                <div class="email-scroll-box">
-                    {% if section.emails|length == 0 %}
-                        <p class="text-muted small mb-0 px-3 pt-3 pb-2">
-                            No emails in this category yet.
-                        </p>
-                    {% else %}
-                        {% for email in section.emails %}
-                        <div
-                            class="mb-3 px-3 {% if not loop.last %}border-bottom pb-2{% else %}pb-2{% endif %} dash-email-item"
-                            data-email-id="{{ email.id }}"
-                            data-subject="{{ (email.subject or 'No subject')|e }}"
-                            data-sender="{{ (email.sender_name or email.sender_addr or '')|e }}"
-                            data-date="{{ (email.collected_date or '')|e }}"
-                        >
-                            <a class="text-decoration-none text-reset d-block"
-                               href="{{ url_for('view_all_emails') }}?email_id={{ email.id }}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="me-2">
-                                        <div class="fw-semibold email-subject">
-                                            {{ email.subject or "No subject" }}
-                                        </div>
-                                        <div class="small text-muted email-sender">
-                                            {{ email.sender_name or email.sender_addr }}
-                                        </div>
-                                    </div>
-
-                                    <div class="text-end small">
-                                        {% if email.collected_date %}
-                                            <div class="text-muted">
-                                                {{ email.collected_date }}
-                                            </div>
-                                        {% endif %}
-
-                                        {% if loop.first %}
-                                            {% if email.is_unread %}
-                                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle">
-                                                    Unread
-                                                </span>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if email.is_unread %}
-                                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                                    Unread
-                                                </span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                {% if email.preview %}
-                                <div class="small text-muted email-preview mt-1">
-                                    {{ email.preview }}
-                                </div>
-                                {% endif %}
-                            </a>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
+      <!-- Scrollable email list -->
+      <div class="card-body p-0">
+        <div class="email-scroll-box">
+          {% if section.emails|length == 0 %}
+          <p class="text-muted small mb-0 px-3 pt-3 pb-2">
+            No emails in this category yet.
+          </p>
+          {% else %}
+          {% for email in section.emails %}
+          <div class="mb-3 px-3 {% if not loop.last %}border-bottom pb-2{% else %}pb-2{% endif %} dash-email-item"
+            data-email-id="{{ email.id }}" data-subject="{{ (email.subject or 'No subject')|e }}"
+            data-sender="{{ (email.sender_name or email.sender_addr or '')|e }}"
+            data-date="{{ (email.collected_date or '')|e }}">
+            <a class="text-decoration-none text-reset d-block"
+              href="{{ url_for('view_all_emails') }}?email_id={{ email.id }}">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="me-2">
+                  <div class="fw-semibold email-subject">
+                    {{ email.subject or "No subject" }}
+                  </div>
+                  <div class="small text-muted email-sender">
+                    {{ email.sender_name or email.sender_addr }}
+                  </div>
                 </div>
-            </div>
 
+                <div class="text-end small">
+                  {% if email.collected_date %}
+                  <div class="text-muted">
+                    {{ email.collected_date }}
+                  </div>
+                  {% endif %}
+
+                  {% if loop.first %}
+                  {% if email.is_unread %}
+                  <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle">
+                    Unread
+                  </span>
+                  {% endif %}
+                  {% else %}
+                  {% if email.is_unread %}
+                  <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">
+                    Unread
+                  </span>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- {% if email.preview %}
+              <div class="small text-muted email-preview mt-1">
+                {{ email.preview }}
+              </div>
+              {% endif %} -->
+            </a>
+          </div>
+          {% endfor %}
+          {% endif %}
         </div>
+      </div>
+
     </div>
-    {% endfor %}
+  </div>
+  {% endfor %}
 </div>
 {% endif %}
 
 <style>
-    .text-truncate {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+  .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    /* allow multi-line subject/preview without hard cropping */
-    .email-subject {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;         /* up to 2 lines */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+  /* allow multi-line subject/preview without hard cropping */
+  .email-subject {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* up to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-    .email-sender {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+  .email-sender {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    .email-preview {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;         /* up to 2 lines of preview */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+  .email-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* up to 2 lines of preview */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-.email-scroll-box {
-        max-height: 280px;
-        overflow-y: auto;
-        padding-top: 0.75rem;
-        padding-bottom: 0.75rem;
-        scrollbar-width: none; /* Firefox hide scrollbar */
-    }
+  .email-scroll-box {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    scrollbar-width: none;
+    /* Firefox hide scrollbar */
+  }
 
-    .email-scroll-box::-webkit-scrollbar {
-        width: 0px;   /* Chrome/Safari/Edge hide scrollbar */
-        height: 0px;
-        display: none;
-    }
+  .email-scroll-box::-webkit-scrollbar {
+    width: 0px;
+    /* Chrome/Safari/Edge hide scrollbar */
+    height: 0px;
+    display: none;
+  }
 
-    .hover-preview {
-        position: fixed;
-        z-index: 1050;
-        min-width: 360px;
-        max-width: 640px;
-        max-height: 80vh;
-        overflow: hidden;
-        background-color: #ffffff;
-        border-radius: 0.75rem;
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
-        opacity: 0;
-        transform: translateY(6px);
-        transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-        pointer-events: none;
-        display: none;
-    }
+  .hover-preview {
+    position: fixed;
+    z-index: 1050;
+    min-width: 360px;
+    max-width: 640px;
+    max-height: 80vh;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    pointer-events: none;
+    display: none;
+  }
 
-    .hover-preview.visible {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
+  .hover-preview.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
 
-    .hover-preview-header {
-        padding: 0.4rem 0.7rem;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-        font-size: 0.78rem;
-        background: linear-gradient(to right, #f8fafc, #e5e7eb);
-    }
+  .hover-preview-header {
+    padding: 0.4rem 0.7rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    font-size: 0.78rem;
+    background: linear-gradient(to right, #f8fafc, #e5e7eb);
+  }
 
-    .hover-preview-header-subject {
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 0.15rem;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
+  .hover-preview-header-subject {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.15rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
 
-    .hover-preview-header-meta {
-        font-size: 0.72rem;
-        color: #6b7280;
-        display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
+  .hover-preview-header-meta {
+    font-size: 0.72rem;
+    color: #6b7280;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
 
-    .hover-preview-frame-wrap {
-        position: relative;
-        background-color: #f3f4f6;
-    }
+  .hover-preview-frame-wrap {
+    position: relative;
+    background-color: #f3f4f6;
+  }
 
-    .hover-preview-frame {
-        width: 100%;
-        height: 100%;
-        border: none;
-        background-color: #ffffff;
-    }
+  .hover-preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #ffffff;
+  }
 
-    body.dark-mode .hover-preview {
-        background-color: #020617;
-        border: 1px solid #1e293b;
-    }
+  body.dark-mode .hover-preview {
+    background-color: #020617;
+    border: 1px solid #1e293b;
+  }
 
-    body.dark-mode .hover-preview-frame {
-        background-color: #020617;
-    }
+  body.dark-mode .hover-preview-frame {
+    background-color: #020617;
+  }
 
-    body.dark-mode .hover-preview-header-meta {
-        color: #9ca3af;
-    }
+  body.dark-mode .hover-preview-header-meta {
+    color: #9ca3af;
+  }
 </style>
 {% endblock %}
 
@@ -238,9 +238,9 @@
     document.body.appendChild(preview);
 
     const subjectEl = preview.querySelector('[data-role="subject"]');
-    const senderEl  = preview.querySelector('[data-role="sender"]');
-    const dateEl    = preview.querySelector('[data-role="date"]');
-    const frame     = preview.querySelector('[data-role="frame"]');
+    const senderEl = preview.querySelector('[data-role="sender"]');
+    const dateEl = preview.querySelector('[data-role="date"]');
+    const frame = preview.querySelector('[data-role="frame"]');
 
     let hoverTimeout = null;
     let hideTimeout = null;
