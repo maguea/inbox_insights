@@ -1,5 +1,8 @@
 # Matt 4:4
-# this will be experimental where the user can login into inbox insight. i moved the imap login things to email/email_actions.py -tolu
+# user_accounts.py Tolu Kolade Oct 11, 2025
+# this will be experimental where the user can login into inbox insight. 
+# i moved the imap login things to email/email_actions.py
+
 from src.lib.database.db_actions import DB_Actions
 from src.lib import DB_CONST, EMAIL_CONST
 

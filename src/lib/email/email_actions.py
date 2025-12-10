@@ -1,4 +1,8 @@
-﻿import json
+﻿# email_actions.py Tolu Kolade Sept 29, 2025
+# holds various actions that can be done with emails in the db
+# 
+
+import json
 
 from src.lib import EMAIL_CONST
 from src.lib.database.db_actions import DB_Actions
@@ -134,7 +138,7 @@ def _email_get_by_page(user, page, cat, per_page=50):
 
     return emails
 
-
+# isaac
 def _email_get_dashboard(user, per_category=3):
     """
     Returns category sections for the dashboard page:
@@ -207,6 +211,7 @@ def _email_get_dashboard(user, per_category=3):
 
     return sections
 
+# alex
 def _email_delete(user, email_id):
     """
     Delete a single email by its ID for a given user.

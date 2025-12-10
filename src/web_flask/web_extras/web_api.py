@@ -1,4 +1,8 @@
-# tolu kolade
+# web_api.py Tolu Kolade Oct 28, 2025
+# This is the implementations for api functions. 
+# this will not return any html pages but json information
+# 
+
 from flask import request, session, abort, jsonify
 
 from . import api_bp
@@ -68,6 +72,9 @@ def save_key():
 
 @api_bp.post('/update_emails')
 def update_emails():
+    '''
+    pull emails from imap server and save them to the db
+    '''
     username = session.get('email_user')
     server = session.get('email_server')
     if not username or not server:
@@ -85,7 +92,7 @@ def update_emails():
 
     return jsonify({"ok": True, "msg": "Emails updated successfully"})
 
-
+# isaac tucker
 @api_bp.get("/categories")
 def categories_list():
     """Return all categories as JSON."""
@@ -104,7 +111,7 @@ def categories_list():
 
     return jsonify({"ok": True, "categories": categories})
 
-
+# nate, isaac
 @api_bp.post("/categories")
 def categories_upsert():
     """

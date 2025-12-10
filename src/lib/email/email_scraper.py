@@ -1,4 +1,7 @@
 # Matt 4:4 - Modified to return formatted email list
+# email_scraper.py Alex Mague Sept 17, 2025
+# downloads and process emails from the imap server
+# Modified: tolu - changed output format
 
 import imaplib, email, json
 from email.header import decode_header

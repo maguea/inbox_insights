@@ -1,4 +1,9 @@
-# tolu kolade
+# web.py Tolu Kolade Sept 29, 2025
+# This is the main entry point for the web app. 
+# it creates the flask app and defines the root webpages and 
+# adds blueprints for supplemental pages
+# 
+
 from flask import Flask, redirect, session, render_template, url_for
 import os, secrets
 from dotenv import load_dotenv, set_key
@@ -22,6 +27,9 @@ app.register_blueprint(bp_login)
 
 @app.route('/')
 def index():
+    '''
+    will redirect to login page if no session
+    '''
     username = session.get('email_user')
     server   = session.get('email_server')
     if not username or not server:
@@ -46,7 +54,9 @@ def client_settings():
 def view_all_emails():
     return render_template('history.html')
 
-
 @app.before_request
 def make_session_permanent():
+    '''
+    makes the session be permanent
+    '''
     session.permanent = True

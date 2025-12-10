@@ -1,4 +1,7 @@
-# src/lib/account/categories.py
+# user_categories.py Isaac tucker Oct 11, 2025
+# getter and setter for categories of a user
+# Modified: tolu - modified for db use
+
 import json
 from src.lib.database.db_actions import DB_Actions
 

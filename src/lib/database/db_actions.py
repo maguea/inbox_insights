@@ -1,3 +1,8 @@
+# Matt 4:4
+# db_actions.py Alex Mague Nov 17, 2025
+# functions that will have the sql commands for actions to call 
+# Modified: Tolu Kolade - abstraction. addition of queries
+
 from datetime import datetime as dt
 from datetime import timezone as tz
 from datetime import timedelta

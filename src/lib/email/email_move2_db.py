@@ -1,3 +1,7 @@
+# email_move2_db.py Tolu Kolade Nov 26, 2025
+# calls the email scraper and process each email to be put into the db
+# 
+
 import json
 from datetime import timedelta
 from datetime import datetime as dt

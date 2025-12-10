@@ -1,3 +1,8 @@
+# app.py Tolu Kolade Sept 29, 2025
+# This is the main entry point for the flask project. 
+# it runs the flask app and defines the port
+# 
+
 from flask import render_template, request, jsonify, session
 
 from src.lib.account.user_accounts import _user_create_account

@@ -1,4 +1,8 @@
 # Matt 4:4
+# db_conn.py Alex Mague Nov 17, 2025
+# singleton that will connect to the pgsql db and will execute queries
+# Modified: Tolu Kolade - abstraction.
+
 import psycopg2 as pg
 import traceback
 from src.lib import DB_CONST
