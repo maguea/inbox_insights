@@ -55,7 +55,6 @@ class DB_Actions:
     def _gather_data_by_category(self, user_id, category, limit, offset):
         '''
         This functions uses SQL to gather all emails by category.
-        Ensure in previous function that user_id == login id for private categories
         '''
         query = '''SELECT id, sender_add, category, data, collected_date, delete_date 
         FROM public.email_data 

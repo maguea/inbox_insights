@@ -12,8 +12,6 @@ def save_categories(user, categories, password=""):
         "days_until_delete": 30
       }
     """
-    # TODO: implement
-
     # save category
     db = DB_Actions()
     categories_json = json.dumps(categories)

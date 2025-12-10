@@ -101,7 +101,7 @@
                 statusMsg.classList.remove('d-none');
 
                 if (data.ok === true) {
-                    window.location.href = '{{ url_for("index") }}';   // <── SUCCESS REDIRECT
+                    window.location.href = '{{ url_for("index") }}';   // SUCCESS REDIRECT
                 } else {
                     statusMsg.classList.add('alert', 'alert-danger');
                     statusMsg.textContent = data.msg || 'Invalid credentials. Please try again.';
@@ -137,7 +137,7 @@
                 statusMsg.classList.remove('d-none');
 
                 if (data.ok === true) {
-                    window.location.href = '{{ url_for("index") }}';   // <── SUCCESS REDIRECT
+                    window.location.href = '{{ url_for("index") }}';   // SUCCESS REDIRECT
                 } else {
                     statusMsg.classList.add('alert', 'alert-danger');
                     statusMsg.textContent = data.msg || 'Unable to create account.';
