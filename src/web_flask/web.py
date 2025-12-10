@@ -4,12 +4,11 @@ import os, secrets
 from dotenv import load_dotenv, set_key
 
 from src.web_flask.web_extras import api_bp, bp_login
-from src.lib import EMAIL_CONST
 from src.lib.email.email_actions import _email_get_dashboard
 
 app = Flask(__name__)
 
-# add secret key for session
+# add secret key for sessions
 load_dotenv()
 secret_key = os.getenv('FLASK_SECRET_KEY')
 if secret_key == None:

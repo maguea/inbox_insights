@@ -1,7 +1,5 @@
 from flask import render_template, request, jsonify, session
 
-from src.lib import EMAIL_CONST
-from src.lib.email.email_actions import _email_login
 from src.lib.account.user_accounts import _user_create_account
 from . import bp_login
 
@@ -9,6 +7,7 @@ from . import bp_login
 def login_page():
     return render_template('login_page.html')
 
+# this is implemented in api.check_user. should be moved here
 @bp_login.post('/login')
 def email_login():
     # username = request.form.get('user')

@@ -1,6 +1,5 @@
 # tolu kolade
 from flask import request, session, abort, jsonify
-import json
 
 from . import api_bp
 from src.lib import EMAIL_CONST, get_error_message
@@ -12,10 +11,13 @@ from src.lib.account.user_accounts import _user_login
 
 @api_bp.post('/check_user')
 def check_user_account():
+    '''
+    check if user exist in db
+    '''
     username = request.form.get('user')
     password = request.form.get('pass')
     server = request.form.get('server')
-    if not password:
+    if not password: # default password
         password = ""
 
     res = _user_login(username, password)
@@ -29,6 +31,7 @@ def check_user_account():
 
 @api_bp.get('/check_email_account')
 def check_email_account():
+    '''check if connected to imap'''
     username = session.get('email_user')
     server = session.get('email_server')
     if not username or not server:
@@ -43,6 +46,7 @@ def check_email_account():
 
 @api_bp.post('/save_key')
 def save_key():
+    '''save email app key to db'''
     username = request.form.get('user')
     server = request.form.get('server')
     password = request.form.get('password')
@@ -237,7 +241,8 @@ def remove_email(eid: int):
 @api_bp.post('/register')
 def add_email():
     '''
-    register a new user or email session'''
+    register a new user or email session
+    '''
     username = request.form.get('user')
     key = request.form.get('key')
     password = request.form.get('password')
